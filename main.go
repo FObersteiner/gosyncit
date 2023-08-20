@@ -15,23 +15,25 @@ import (
 const (
 	defaultModeDir  fs.FileMode = 0755 // rwxr-xr-x
 	defaultModeFile fs.FileMode = 0644 // rw-r--r--
-	BUFFERSIZE                  = 4096
+	BUFFERSIZE                  = 4096 // is also default ext4 sector size
 )
 
 type config struct {
-	dryRun       bool // only print to console
-	ignoreHidden bool // ignore ".*"
-	forceWrite   bool // overwrite files in dst even if newer
-	cleanDst     bool // remove files from dst that do not exist in src
-	// TODO : permissions ?
+	dryRun          bool // only print to console
+	ignoreHidden    bool // ignore ".*"
+	forceWrite      bool // overwrite files in dst even if newer
+	cleanDst        bool // remove files from dst that do not exist in src
+	keepPermissions bool // set original premissions for updated files
 }
 
 func (c *config) load() error {
-	// TODO : this can be populated from flags
+	// TODO : populate from flags
 	c.dryRun = true
 	c.ignoreHidden = true
+	// TODO : add include / exclude filters, --> config file ?!
 	c.forceWrite = false
 	c.cleanDst = false
+	c.keepPermissions = true
 	return nil
 }
 
@@ -58,7 +60,8 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 	if src == dst {
 		return errors.New("source and destination are identical")
 	}
-	return filepath.Walk(src,
+	// pt.1 : src --> dst
+	err := filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -76,7 +79,10 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 			// destination does not exist, create directory or copy file
 			if os.IsNotExist(err) {
 				log.Info().Msgf("create : directory or file %v", dstPath)
-				return copyFileOrCreateDir(path, dstPath, srcInfo, log)
+				if c.dryRun {
+					return nil
+				}
+				return copyFileOrCreateDir(path, dstPath, srcInfo, c, log)
 			}
 
 			// destination exists; compare files, skip directories
@@ -88,7 +94,10 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 				}
 				if srcInfo.ModTime().After(dstInfo.ModTime()) || c.forceWrite {
 					log.Info().Msg("copy   : source file newer or overwrite enforced")
-					return copyFileOrCreateDir(path, dstPath, srcInfo, log)
+					if c.dryRun {
+						return nil
+					}
+					return copyFileOrCreateDir(path, dstPath, srcInfo, c, log)
 				}
 				log.Info().Msg("skip   : source file not newer")
 				return nil
@@ -96,9 +105,15 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 			return err
 		},
 	)
+	if err != nil {
+		return err
+	}
+	// pt.2 : if dst should be an exact mirror, remove everything from dst that is not in src
+
+	return nil
 }
 
-func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, log *zerolog.Logger) error {
+func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config, log *zerolog.Logger) error {
 	if sourceFileStat.IsDir() {
 		return os.MkdirAll(dst, defaultModeDir)
 	}
@@ -107,7 +122,15 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, log *zerol
 		// TODO : follow symlinks ? --> os.Readlink
 		return nil
 	}
-	return copyFile(src, dst)
+	err := copyFile(src, dst)
+	if err != nil {
+		return err
+	}
+	if c.keepPermissions {
+		srcMode := sourceFileStat.Mode()
+		return os.Chmod(dst, srcMode)
+	}
+	return nil
 }
 
 func copyFile(src, dst string) error {
@@ -136,7 +159,6 @@ func copyFile(src, dst string) error {
 			return err
 		}
 	}
-	// TODO : permissoins; os.Chmod here ?
 	return nil
 }
 
