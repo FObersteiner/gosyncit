@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -33,7 +34,11 @@ func (c *config) load() error {
 	// TODO : add include / exclude filters, --> config file ?!
 	c.forceWrite = false
 	c.cleanDst = false
+
+	// TODO : this does not work on windows:
 	c.keepPermissions = true
+	// --> notify the user
+
 	return nil
 }
 
@@ -126,7 +131,7 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config,
 	if err != nil {
 		return err
 	}
-	if c.keepPermissions {
+	if c.keepPermissions && runtime.GOOS != "windows" {
 		srcMode := sourceFileStat.Mode()
 		return os.Chmod(dst, srcMode)
 	}
