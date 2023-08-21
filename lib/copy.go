@@ -2,6 +2,7 @@ package copy
 
 import (
 	"io"
+	"log"
 	"os"
 )
 
@@ -34,4 +35,15 @@ func CopyFile(src, dst string) error {
 		}
 	}
 	return nil
+}
+
+// CopyPerm tries to copy permissions from src to dst file
+func CopyPerm(src, dst string) error {
+	srcStat, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	log.Println(srcStat.Mode())
+
+	return os.Chmod(dst, srcStat.Mode())
 }
