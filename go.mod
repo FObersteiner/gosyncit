@@ -1,4 +1,4 @@
-module dirfun
+module gosyncit
 
 go 1.20
 

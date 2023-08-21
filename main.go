@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -11,12 +10,13 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+
+	cp "gosyncit/lib/copy"
 )
 
 const (
 	defaultModeDir  fs.FileMode = 0755 // rwxr-xr-x
 	defaultModeFile fs.FileMode = 0644 // rw-r--r--
-	BUFFERSIZE                  = 4096 // is also default ext4 sector size
 )
 
 type config struct {
@@ -127,42 +127,13 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config,
 		// TODO : follow symlinks ? --> os.Readlink
 		return nil
 	}
-	err := copyFile(src, dst)
+	err := cp.CopyFile(src, dst)
 	if err != nil {
 		return err
 	}
 	if c.keepPermissions && runtime.GOOS != "windows" {
 		srcMode := sourceFileStat.Mode()
 		return os.Chmod(dst, srcMode)
-	}
-	return nil
-}
-
-func copyFile(src, dst string) error {
-	source, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer source.Close()
-
-	destination, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer destination.Close()
-
-	buf := make([]byte, BUFFERSIZE)
-	for {
-		n, err := source.Read(buf)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		if n == 0 {
-			break
-		}
-		if _, err := destination.Write(buf[:n]); err != nil {
-			return err
-		}
 	}
 	return nil
 }
