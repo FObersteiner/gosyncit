@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	cp "gosyncit/lib/copy"
+	cp "gosyncit/lib"
 )
 
 const (
@@ -25,6 +26,15 @@ type config struct {
 	forceWrite      bool // overwrite files in dst even if newer
 	cleanDst        bool // remove files from dst that do not exist in src
 	keepPermissions bool // set original premissions for updated files
+}
+
+func (c *config) String() string {
+	repr := fmt.Sprintf("dryRun: %v", c.dryRun)
+	repr += fmt.Sprintf(", ignoreHidden: %v", c.ignoreHidden)
+	repr += fmt.Sprintf(", forceWrite: %v", c.forceWrite)
+	repr += fmt.Sprintf(", cleanDst: %v", c.cleanDst)
+	repr += fmt.Sprintf(", keepPermissions: %v", c.keepPermissions)
+	return repr
 }
 
 func (c *config) load() error {
@@ -65,6 +75,8 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 	if src == dst {
 		return errors.New("source and destination are identical")
 	}
+
+	log.Info().Msgf("config --> %s", c)
 	// pt.1 : src --> dst
 	err := filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
@@ -144,11 +156,12 @@ func main() {
 	err := c.load()
 	handleErrFatal(err, &log)
 
-	src := "/home/floo/Code/go/dirfun/testdata/dirA/"
+	wd, _ := os.Getwd()
+	src := filepath.Join(wd, "testdata/dirA/")
 	src, err = checkPath(src)
 	handleErrFatal(err, &log)
 
-	dst := "/home/floo/Code/go/dirfun/testdata/dirB/"
+	dst := filepath.Join(wd, "testdata/dirB/")
 	dst, err = checkPath(dst)
 	handleErrFatal(err, &log)
 
