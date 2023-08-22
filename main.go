@@ -12,7 +12,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	cp "gosyncit/lib"
+	cp "gosyncit/lib/copy"
 )
 
 const (
