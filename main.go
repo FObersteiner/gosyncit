@@ -70,14 +70,15 @@ func checkPath(path string) (string, error) {
 	return path, nil
 }
 
-// mirror src to dst
+// mirror src to dst. mirroring is done "loose", i.e. files that exist in the destination
+// but not in the source are kept.
 func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 	if src == dst {
 		return errors.New("source and destination are identical")
 	}
 
-	log.Info().Msgf("config --> %s", c)
-	// pt.1 : src --> dst
+	log.Info().Msgf("config : %s", c)
+
 	err := filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
@@ -85,16 +86,20 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 			}
 			if c.ignoreHidden {
 				if strings.Contains(path, "/.") {
+					log.Info().Msgf("skip   : hidden file %v", path)
 					return nil
 				}
 			}
 			childPath := strings.TrimPrefix(path, src) // for the root dir, childPath will be empty
 			dstPath := filepath.Join(dst, childPath)
-
 			dstInfo, err := os.Stat(dstPath)
 
 			// destination does not exist, create directory or copy file
 			if os.IsNotExist(err) {
+				if !srcInfo.Mode().IsRegular() {
+					log.Info().Msgf("skip   : %s is not a regular file", src)
+					return nil
+				}
 				log.Info().Msgf("create : directory or file %v", dstPath)
 				if c.dryRun {
 					return nil
@@ -106,7 +111,7 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 			if err == nil {
 				log.Info().Msgf("check  : directory or file %v", dstPath)
 				if srcInfo.IsDir() {
-					log.Info().Msg("skip   : destination exists and is a directory, skipping")
+					log.Info().Msg("skip   : destination exists and is a directory")
 					return nil
 				}
 				if srcInfo.ModTime().After(dstInfo.ModTime()) || c.forceWrite {
@@ -122,12 +127,8 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 			return err
 		},
 	)
-	if err != nil {
-		return err
-	}
-	// pt.2 : if dst should be an exact mirror, remove everything from dst that is not in src
 
-	return nil
+	return err
 }
 
 func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config, log *zerolog.Logger) error {
@@ -136,7 +137,6 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config,
 	}
 	if !sourceFileStat.Mode().IsRegular() {
 		log.Info().Msgf("skip   : %s is not a regular file", src)
-		// TODO : follow symlinks ? --> os.Readlink
 		return nil
 	}
 	err := cp.CopyFile(src, dst)
@@ -151,7 +151,8 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config,
 }
 
 func main() {
-	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
+	zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
+	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05Z"})
 	c := &config{}
 	err := c.load()
 	handleErrFatal(err, &log)
