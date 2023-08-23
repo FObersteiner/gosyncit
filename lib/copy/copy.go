@@ -2,7 +2,6 @@ package copy
 
 import (
 	"io"
-	"log"
 	"os"
 )
 
@@ -43,7 +42,6 @@ func CopyPerm(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	log.Println(srcStat.Mode())
 
 	return os.Chmod(dst, srcStat.Mode())
 }
