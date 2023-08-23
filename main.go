@@ -83,10 +83,10 @@ func checkPath(path string) (string, error) {
 // but not in the source are kept.
 func mirror(src, dst string, c *config) error {
 	if src == dst {
-		return errors.New("source and destination are identical")
+		return errors.New("source and destination path are identical")
 	}
 
-	slog.Info(fmt.Sprintf("config : %s", c))
+	slog.Info(fmt.Sprintf("config : %s\n---", c))
 
 	err := filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
@@ -95,7 +95,7 @@ func mirror(src, dst string, c *config) error {
 			}
 			if c.ignoreHidden {
 				if strings.Contains(path, "/.") {
-					slog.Info(fmt.Sprintf("skip   : hidden file %v", path))
+					slog.Info(fmt.Sprintf("skip   : hidden file '%s'", path))
 					return nil
 				}
 			}
@@ -105,32 +105,29 @@ func mirror(src, dst string, c *config) error {
 
 			// destination does not exist, create directory or copy file
 			if os.IsNotExist(err) {
+				if srcInfo.IsDir() {
+					slog.Info(fmt.Sprintf("create : create '%s'", dstPath))
+					return copyFileOrCreateDir(path, dstPath, srcInfo, c)
+				}
 				if !srcInfo.Mode().IsRegular() {
-					slog.Info(fmt.Sprintf("skip   : %s is not a regular file", src))
+					slog.Info(fmt.Sprintf("skip   : '%s' is not a regular file", path))
 					return nil
 				}
-				slog.Info(fmt.Sprintf("create : directory or file %v", dstPath))
-				if c.dryRun {
-					return nil
-				}
+				slog.Info(fmt.Sprintf("create : file '%s'", dstPath))
 				return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 			}
 
 			// destination exists; compare files, skip directories
 			if err == nil {
-				slog.Info(fmt.Sprintf("check  : directory or file %v", dstPath))
 				if srcInfo.IsDir() {
-					slog.Info("skip   : destination exists and is a directory")
+					slog.Info(fmt.Sprintf("skip   : exists and is a directory: '%s'", dstPath))
 					return nil
 				}
 				if srcInfo.ModTime().After(dstInfo.ModTime()) || c.forceWrite {
 					slog.Info("copy   : source file newer or overwrite enforced")
-					if c.dryRun {
-						return nil
-					}
 					return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 				}
-				slog.Info("skip   : source file not newer")
+				slog.Info(fmt.Sprintf("skip   : source file '%s' older or equal", path))
 				return nil
 			}
 			return err
@@ -141,20 +138,21 @@ func mirror(src, dst string, c *config) error {
 }
 
 func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config) error {
+	if c.dryRun {
+		return nil
+	}
 	if sourceFileStat.IsDir() {
 		return os.MkdirAll(dst, defaultModeDir)
 	}
 	if !sourceFileStat.Mode().IsRegular() {
-		slog.Info(fmt.Sprintf("skip   : %s is not a regular file", src))
-		return nil
+		return fmt.Errorf("%s is not a regular file", src)
 	}
 	err := cp.CopyFile(src, dst)
 	if err != nil {
 		return err
 	}
 	if c.keepPermissions && runtime.GOOS != "windows" {
-		srcMode := sourceFileStat.Mode()
-		return os.Chmod(dst, srcMode)
+		return os.Chmod(dst, sourceFileStat.Mode())
 	}
 	return nil
 }
