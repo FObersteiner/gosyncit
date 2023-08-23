@@ -2,15 +2,15 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
-	"github.com/rs/zerolog"
+	"log/slog"
 
 	cp "gosyncit/lib/copy"
 )
@@ -25,7 +25,7 @@ type config struct {
 	ignoreHidden    bool // ignore ".*"
 	forceWrite      bool // overwrite files in dst even if newer
 	cleanDst        bool // remove files from dst that do not exist in src
-	keepPermissions bool // set original premissions for updated files
+	keepPermissions bool // set original permissions for updated files
 }
 
 func (c *config) String() string {
@@ -37,24 +37,33 @@ func (c *config) String() string {
 	return repr
 }
 
-func (c *config) load() error {
-	// TODO : populate from flags
-	c.dryRun = true
-	c.ignoreHidden = true
-	// TODO : add include / exclude filters, --> config file ?!
-	c.forceWrite = false
-	c.cleanDst = false
+func (c *config) load(args []string) error {
+	flags := flag.NewFlagSet(args[0], flag.ExitOnError)
 
-	// TODO : this does not work on windows:
-	c.keepPermissions = true
-	// --> notify the user
+	var (
+		dryRun       = flags.Bool("dryRun", true, "dry run: only tell what you will do but don't actually do it")
+		ignoreHidden = flags.Bool("ignoreHidden", true, "ignore hidden files")
+		forceWrite   = flags.Bool("forceWrite", false, "force write from source to destination, regardless of file timestamp etc.")
+		cleanDst     = flags.Bool("cleanDst", false, "strict mirror, only files from source must exist in destination")
+	)
+
+	if err := flags.Parse(args[1:]); err != nil {
+		return err
+	}
+
+	c.dryRun = *dryRun
+	c.ignoreHidden = *ignoreHidden // TODO : add include / exclude filters, --> config file ?!
+	c.forceWrite = *forceWrite
+	c.cleanDst = *cleanDst
+	c.keepPermissions = true // TODO : this does not work on windows ?!
 
 	return nil
 }
 
-func handleErrFatal(err error, log *zerolog.Logger) {
+func handleErrFatal(err error) {
 	if err != nil {
-		log.Fatal().Stack().Err(err).Msg("")
+		slog.Error("fatal", err)
+		os.Exit(1)
 	}
 }
 
@@ -72,12 +81,12 @@ func checkPath(path string) (string, error) {
 
 // mirror src to dst. mirroring is done "loose", i.e. files that exist in the destination
 // but not in the source are kept.
-func mirror(src, dst string, c *config, log *zerolog.Logger) error {
+func mirror(src, dst string, c *config) error {
 	if src == dst {
 		return errors.New("source and destination are identical")
 	}
 
-	log.Info().Msgf("config : %s", c)
+	slog.Info(fmt.Sprintf("config : %s", c))
 
 	err := filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
@@ -86,7 +95,7 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 			}
 			if c.ignoreHidden {
 				if strings.Contains(path, "/.") {
-					log.Info().Msgf("skip   : hidden file %v", path)
+					slog.Info(fmt.Sprintf("skip   : hidden file %v", path))
 					return nil
 				}
 			}
@@ -97,31 +106,31 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 			// destination does not exist, create directory or copy file
 			if os.IsNotExist(err) {
 				if !srcInfo.Mode().IsRegular() {
-					log.Info().Msgf("skip   : %s is not a regular file", src)
+					slog.Info(fmt.Sprintf("skip   : %s is not a regular file", src))
 					return nil
 				}
-				log.Info().Msgf("create : directory or file %v", dstPath)
+				slog.Info(fmt.Sprintf("create : directory or file %v", dstPath))
 				if c.dryRun {
 					return nil
 				}
-				return copyFileOrCreateDir(path, dstPath, srcInfo, c, log)
+				return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 			}
 
 			// destination exists; compare files, skip directories
 			if err == nil {
-				log.Info().Msgf("check  : directory or file %v", dstPath)
+				slog.Info(fmt.Sprintf("check  : directory or file %v", dstPath))
 				if srcInfo.IsDir() {
-					log.Info().Msg("skip   : destination exists and is a directory")
+					slog.Info("skip   : destination exists and is a directory")
 					return nil
 				}
 				if srcInfo.ModTime().After(dstInfo.ModTime()) || c.forceWrite {
-					log.Info().Msg("copy   : source file newer or overwrite enforced")
+					slog.Info("copy   : source file newer or overwrite enforced")
 					if c.dryRun {
 						return nil
 					}
-					return copyFileOrCreateDir(path, dstPath, srcInfo, c, log)
+					return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 				}
-				log.Info().Msg("skip   : source file not newer")
+				slog.Info("skip   : source file not newer")
 				return nil
 			}
 			return err
@@ -131,12 +140,12 @@ func mirror(src, dst string, c *config, log *zerolog.Logger) error {
 	return err
 }
 
-func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config, log *zerolog.Logger) error {
+func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config) error {
 	if sourceFileStat.IsDir() {
 		return os.MkdirAll(dst, defaultModeDir)
 	}
 	if !sourceFileStat.Mode().IsRegular() {
-		log.Info().Msgf("skip   : %s is not a regular file", src)
+		slog.Info(fmt.Sprintf("skip   : %s is not a regular file", src))
 		return nil
 	}
 	err := cp.CopyFile(src, dst)
@@ -151,21 +160,19 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config,
 }
 
 func main() {
-	zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
-	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05Z"})
 	c := &config{}
-	err := c.load()
-	handleErrFatal(err, &log)
+	err := c.load(os.Args)
+	handleErrFatal(err)
 
 	wd, _ := os.Getwd()
 	src := filepath.Join(wd, "testdata/dirA/")
 	src, err = checkPath(src)
-	handleErrFatal(err, &log)
+	handleErrFatal(err)
 
 	dst := filepath.Join(wd, "testdata/dirB/")
 	dst, err = checkPath(dst)
-	handleErrFatal(err, &log)
+	handleErrFatal(err)
 
-	err = mirror(src, dst, c, &log)
-	handleErrFatal(err, &log)
+	err = mirror(src, dst, c)
+	handleErrFatal(err)
 }
