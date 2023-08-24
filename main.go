@@ -14,6 +14,7 @@ import (
 
 	"gosyncit/lib/compare"
 	cp "gosyncit/lib/copy"
+	"gosyncit/lib/pathlib"
 )
 
 const (
@@ -70,18 +71,6 @@ func handleErrFatal(err error) {
 		slog.Error("fatal", err)
 		os.Exit(1)
 	}
-}
-
-func checkPath(path string) (string, error) {
-	path = filepath.Clean(path)
-	stats, err := os.Stat(path)
-	if err != nil {
-		return "", err
-	}
-	if !stats.IsDir() {
-		return "", errors.New("specified directory is a file")
-	}
-	return path, nil
 }
 
 // mirror src to dst. mirroring is done "loose", i.e. files that exist in the destination
@@ -170,11 +159,11 @@ func main() {
 
 	wd, _ := os.Getwd()
 	src := filepath.Join(wd, "testdata/dirA/")
-	src, err = checkPath(src)
+	src, err = pathlib.CheckPath(src)
 	handleErrFatal(err)
 
 	dst := filepath.Join(wd, "testdata/dirB/")
-	dst, err = checkPath(dst)
+	dst, err = pathlib.CheckPath(dst)
 	handleErrFatal(err)
 
 	err = mirror(src, dst, c)
