@@ -12,6 +12,7 @@ import (
 
 	"log/slog"
 
+	"gosyncit/lib/compare"
 	cp "gosyncit/lib/copy"
 )
 
@@ -26,6 +27,7 @@ type config struct {
 	forceWrite      bool // overwrite files in dst even if newer
 	cleanDst        bool // remove files from dst that do not exist in src
 	keepPermissions bool // set original permissions for updated files
+	deepCompare     bool // compare files on a byte level if basic comparison (mtime, size) returns true
 }
 
 func (c *config) String() string {
@@ -34,6 +36,7 @@ func (c *config) String() string {
 	repr += fmt.Sprintf(", forceWrite: %v", c.forceWrite)
 	repr += fmt.Sprintf(", cleanDst: %v", c.cleanDst)
 	repr += fmt.Sprintf(", keepPermissions: %v", c.keepPermissions)
+	repr += fmt.Sprintf(", deepCompare: %v", c.deepCompare)
 	return repr
 }
 
@@ -45,6 +48,7 @@ func (c *config) load(args []string) error {
 		ignoreHidden = flags.Bool("ignoreHidden", true, "ignore hidden files")
 		forceWrite   = flags.Bool("forceWrite", false, "force write from source to destination, regardless of file timestamp etc.")
 		cleanDst     = flags.Bool("cleanDst", false, "strict mirror, only files from source must exist in destination")
+		deepCompare  = flags.Bool("deepCompare", false, "compare files on a byte level if basic comparison (mtime, size) returns true")
 	)
 
 	if err := flags.Parse(args[1:]); err != nil {
@@ -56,6 +60,7 @@ func (c *config) load(args []string) error {
 	c.forceWrite = *forceWrite
 	c.cleanDst = *cleanDst
 	c.keepPermissions = true // TODO : this does not work on windows ?!
+	c.deepCompare = *deepCompare
 
 	return nil
 }
@@ -123,8 +128,9 @@ func mirror(src, dst string, c *config) error {
 					slog.Info(fmt.Sprintf("skip   : exists and is a directory: '%s'", dstPath))
 					return nil
 				}
-				if srcInfo.ModTime().After(dstInfo.ModTime()) || c.forceWrite {
-					slog.Info("copy   : source file newer or overwrite enforced")
+				// TODO : add deep-compare option
+				if compare.BasicEqual(srcInfo, dstInfo) || c.forceWrite {
+					slog.Info("copy   : source file changed or overwrite enforced")
 					return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 				}
 				slog.Info(fmt.Sprintf("skip   : source file '%s' older or equal", path))
