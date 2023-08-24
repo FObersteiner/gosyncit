@@ -7,6 +7,7 @@ import (
 
 const BUFFERSIZE = 4096
 
+// CopyFile in chunks of size BUFFERSIZE
 func CopyFile(src, dst string) error {
 	source, err := os.Open(src)
 	if err != nil {
