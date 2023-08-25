@@ -17,6 +17,7 @@ func TestCopyFile(t *testing.T) {
 	// TODO : does this work on !linux ?!
 	oldumask := syscall.Umask(0000)
 	defer syscall.Umask(oldumask)
+	// could also use os.Chmod after write, to set permissions on src file
 
 	dirA, err := os.MkdirTemp("", "dirA")
 	if err != nil {
