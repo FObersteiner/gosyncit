@@ -23,6 +23,7 @@ const (
 )
 
 type config struct {
+	// config string // path to a config file (toml) // TODO : export config fields
 	dryRun          bool // only print to console
 	ignoreHidden    bool // ignore ".*"
 	forceWrite      bool // overwrite files in dst even if newer
