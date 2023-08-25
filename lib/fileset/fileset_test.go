@@ -1,4 +1,4 @@
-package filemap_test
+package fileset_test
 
 import (
 	"log"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	fm "gosyncit/lib/filemap"
+	fm "gosyncit/lib/fileset"
 )
 
 func TestContains(t *testing.T) {
@@ -26,15 +26,15 @@ func TestContains(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	m := make(fm.Filemap)
-	m[file] = info
+	m := fm.New()
+	m.Paths[file] = info
 
 	if !m.Contains(file) {
 		t.Log("Expected map to contain file")
 		t.Fail()
 	}
 
-	storedInfo := m[file]
+	storedInfo := m.Paths[file]
 	if storedInfo.Size() != int64(len(data)) {
 		t.Logf("Expected size %v, got %v", len(data), storedInfo.Size())
 		t.Fail()
