@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -74,16 +73,11 @@ func handleErrFatal(err error) {
 	}
 }
 
-// mirror src to dst. mirroring is done "loose", i.e. files that exist in the destination
-// but not in the source are kept.
-func mirror(src, dst string, c *config) error {
-	if src == dst {
-		return errors.New("source and destination path are identical")
-	}
-
+// mirrorToNewDst is a simplified version of mirror for cases where dst does not exist yet,
+// or "cleanDst" is disabled.
+func mirrorToNewDst(src, dst string, c *config) error {
 	slog.Info(fmt.Sprintf("config : %s\n---", c))
-
-	err := filepath.Walk(src,
+	return filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -102,14 +96,14 @@ func mirror(src, dst string, c *config) error {
 			if os.IsNotExist(err) {
 				if srcInfo.IsDir() {
 					slog.Info(fmt.Sprintf("create : create '%s'", dstPath))
-					return copyFileOrCreateDir(path, dstPath, srcInfo, c)
+					return copyFileOrCreateDir(path, dstPath, srcInfo, c.keepPermissions, c.dryRun)
 				}
 				if !srcInfo.Mode().IsRegular() {
 					slog.Info(fmt.Sprintf("skip   : '%s' is not a regular file", path))
 					return nil
 				}
 				slog.Info(fmt.Sprintf("create : file '%s'", dstPath))
-				return copyFileOrCreateDir(path, dstPath, srcInfo, c)
+				return copyFileOrCreateDir(path, dstPath, srcInfo, c.keepPermissions, c.dryRun)
 			}
 
 			// destination exists; compare files, skip directories
@@ -119,9 +113,9 @@ func mirror(src, dst string, c *config) error {
 					return nil
 				}
 				// TODO : add deep-compare option
-				if compare.BasicEqual(srcInfo, dstInfo) || c.forceWrite {
+				if compare.BasicUnequal(srcInfo, dstInfo) || c.forceWrite {
 					slog.Info("copy   : source file changed or overwrite enforced")
-					return copyFileOrCreateDir(path, dstPath, srcInfo, c)
+					return copyFileOrCreateDir(path, dstPath, srcInfo, c.keepPermissions, c.dryRun)
 				}
 				slog.Info(fmt.Sprintf("skip   : source file '%s' older or equal", path))
 				return nil
@@ -129,12 +123,10 @@ func mirror(src, dst string, c *config) error {
 			return err
 		},
 	)
-
-	return err
 }
 
-func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config) error {
-	if c.dryRun {
+func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, keepPermissions, dryRun bool) error {
+	if dryRun {
 		return nil
 	}
 	if sourceFileStat.IsDir() {
@@ -147,11 +139,20 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config)
 	if err != nil {
 		return err
 	}
-	if c.keepPermissions && runtime.GOOS != "windows" {
+	if keepPermissions && runtime.GOOS != "windows" {
 		return os.Chmod(dst, sourceFileStat.Mode())
 	}
 	return nil
 }
+
+//-----------------------------------------------------------------------------
+//
+// TODO :
+// type mirrorFunc
+// func selectMirrorFunc
+// func mirror (dst exists and is not empty)
+//
+//-----------------------------------------------------------------------------
 
 func main() {
 	c := &config{}
@@ -160,13 +161,15 @@ func main() {
 
 	wd, _ := os.Getwd()
 	src := filepath.Join(wd, "testdata/dirA/")
-	src, err = pathlib.CheckPath(src)
 	handleErrFatal(err)
 
 	dst := filepath.Join(wd, "testdata/dirB/")
-	dst, err = pathlib.CheckPath(dst)
 	handleErrFatal(err)
 
-	err = mirror(src, dst, c)
+	src, dst, err = pathlib.CheckSrcDst(src, dst)
+	handleErrFatal(err)
+
+	slog.Info("run 'mirrorToNewDst'")
+	err = mirrorToNewDst(src, dst, c)
 	handleErrFatal(err)
 }
