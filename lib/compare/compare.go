@@ -8,12 +8,14 @@ import (
 
 const BUFFERSIZE = 4096
 
-// BasicEqual compares file modification time and file size as returend by os.Stat
-func BasicEqual(srcInfo, dstInfo os.FileInfo) bool {
-	return !srcInfo.ModTime().After(dstInfo.ModTime()) || (srcInfo.Size() != dstInfo.Size())
+// BasicUnequal returns true if source modification time is after that of dst modification time,
+// or file sizes do not match.
+func BasicUnequal(srcInfo, dstInfo os.FileInfo) bool {
+	return srcInfo.ModTime().After(dstInfo.ModTime()) || (srcInfo.Size() != dstInfo.Size())
 }
 
-// DeepEqual returns if two files are equal on a byte-level
+// DeepEqual returns true if two files are equal on a byte-level.
+// File modification timestamps are ignored.
 func DeepEqual(src, dst string) (bool, error) {
 	// sanity check: file sizes must be equal
 	srcInfo, err := os.Stat(src)

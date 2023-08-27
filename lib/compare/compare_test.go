@@ -34,10 +34,10 @@ func TestBasic(t *testing.T) {
 	fileInfoA, _ := os.Stat(fileA)
 	fileInfoB, _ := os.Stat(fileB)
 
-	// mtime is equal or B is younger. basic comparison therefore returns true:
-	equal := compare.BasicEqual(fileInfoB, fileInfoA)
-	if !equal {
-		t.Log("expected basic comparison to return true, got false")
+	// mtime is equal or B is younger. basic comparison therefore must return unequal == false
+	unequal := compare.BasicUnequal(fileInfoB, fileInfoA)
+	if unequal {
+		t.Log("expected basic comparison to return unequal = false, got true")
 		t.Fail()
 	}
 }
