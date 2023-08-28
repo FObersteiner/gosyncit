@@ -32,10 +32,10 @@ func CheckDirPath(path string) (string, error) {
 	path = filepath.Clean(path)
 	stats, err := os.Stat(path)
 	if err != nil {
-		return "", err
+		return path, err
 	}
 	if !stats.IsDir() {
-		return "", fmt.Errorf("specified '%v' directory is a file", path)
+		return path, fmt.Errorf("specified '%v' directory is a file", path)
 	}
 	return path, nil
 }
