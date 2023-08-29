@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const TimeFormat = "2006-01-02 15:04:05.000"
+const LogTimeFormat = "2006-01-02 15:04:05.000"
 
 type Config struct {
 	Log *zerolog.Logger
@@ -24,10 +24,10 @@ type Config struct {
 }
 
 func (c *Config) Load(args []string) error {
-	zerolog.TimeFieldFormat = TimeFormat
+	zerolog.TimeFieldFormat = LogTimeFormat
 	log.Logger = log.Output(zerolog.ConsoleWriter{
 		Out:        os.Stderr,
-		TimeFormat: TimeFormat,
+		TimeFormat: LogTimeFormat,
 	})
 	c.Log = &log.Logger
 
@@ -35,10 +35,12 @@ func (c *Config) Load(args []string) error {
 	var (
 		dryRun       = flags.Bool("dryRun", true, "dry run: only tell what you will do but don't actually do it")
 		sync         = flags.Bool("sync", false, "synchronize src and dst, keeping only the newer files")
-		ignoreHidden = flags.Bool("ignoreHidden", true, "ignore hidden files")
+		ignoreHidden = flags.Bool("ignoreHidden", false, "ignore hidden files")
 		forceWrite   = flags.Bool("forceWrite", false, "force write from source to destination, regardless of file timestamp etc.")
-		cleanDst     = flags.Bool("cleanDst", false, "strict mirror, only files from source must exist in destination")
-		deepCompare  = flags.Bool("deepCompare", false, "compare files on a byte level if basic comparison (mtime, size) returns true")
+
+		// TODO : should the default for cleanDst be True ?
+		cleanDst    = flags.Bool("cleanDst", false, "strict mirror, only files from source must exist in destination")
+		deepCompare = flags.Bool("deepCompare", false, "compare files on a byte level if basic comparison (mtime, size) returns true")
 	)
 
 	if err := flags.Parse(args[1:]); err != nil {
