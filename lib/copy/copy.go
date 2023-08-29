@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 
+	"gosyncit/lib/compare"
 	"gosyncit/lib/config"
 	"gosyncit/lib/fileset"
 )
@@ -37,6 +38,7 @@ func SelectCopyFunc(dst string, c *config.Config) CopyFunc {
 
 // MirrorBasic performs a one-way copy from src to dst
 func MirrorBasic(src, dst string, c *config.Config) error {
+	c.Log.Info().Msg("MIRROR BASIC")
 	return filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
@@ -71,35 +73,102 @@ func Mirror(src, dst string, c *config.Config) error {
 	if err != nil {
 		return err
 	}
-	// make filesets concurrently, sync output via error channel
-	errChan := make(chan error)
-	go func() {
-		errChan <- filesetSrc.Populate()
-	}()
-	go func() {
-		errChan <- filesetDst.Populate()
-	}()
-	err = <-errChan
-	if err != nil {
-		<-errChan // make sure other goroutine has completed TODO : needed ?!
-		return err
-	}
-	err = <-errChan
+
+	// we need a fileset for the destination, to check against while walking the src
+	err = filesetDst.Populate()
 	if err != nil {
 		return err
 	}
-	c.Log.Info().Msg(filesetSrc.String())
-	c.Log.Info().Msg(filesetDst.String())
+
+	// now walk the src dir
 	// step 1: copy everything from source to dst if src newer
 	// for file in filesetSrc: src file exists in dst ?
-	//   yes --> compare, copy if newer
-	//   no --> copy
-	//
+	err = filepath.Walk(src,
+		func(path string, srcInfo os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if path == src { // skip basepath
+				return nil
+			}
+			if c.IgnoreHidden && strings.Contains(path, "/.") {
+				c.Log.Info().Msgf("skip   : hidden file '%s'", path)
+				return nil
+			}
+			childPath := strings.TrimPrefix(path, filesetSrc.Basepath)
+
+			// populate filesetSrc on the fly...
+			filesetSrc.Paths[childPath] = srcInfo
+
+			dstPath := filepath.Join(dst, childPath)
+			if !srcInfo.IsDir() && !srcInfo.Mode().IsRegular() {
+				c.Log.Info().Msgf("skip non-regular file '%v'", path)
+				return nil
+			}
+
+			if filesetDst.Contains(childPath) {
+				//   yes --> compare, copy if newer
+				c.Log.Info().Msgf("file '%v' exists in dst, compare", childPath)
+				dstInfo, _ := os.Stat(filepath.Join(filesetDst.Basepath, childPath))
+				if compare.BasicUnequal(srcInfo, dstInfo) {
+					c.Log.Info().Msg("  --> file in src newer, copy")
+					err := copyFileOrCreateDir(
+						filepath.Join(filesetSrc.Basepath, childPath),
+						filepath.Join(filesetDst.Basepath, childPath),
+						srcInfo,
+						c,
+					)
+					if err != nil {
+						c.Log.Error().Err(err).Msg("copy failed")
+					}
+					return nil
+				} else {
+					c.Log.Info().Msg("  --> file in src not newer, skip")
+					return nil
+				}
+			} else {
+				//   no --> copy
+				c.Log.Info().Msgf("file '%v' does not exist in dst, copy", childPath)
+				err := copyFileOrCreateDir(
+					filepath.Join(filesetSrc.Basepath, childPath),
+					filepath.Join(filesetDst.Basepath, childPath),
+					srcInfo,
+					c,
+				)
+				if err != nil {
+					c.Log.Error().Err(err).Msg("copy failed")
+				}
+			}
+
+			c.Log.Info().Msgf("copy / create dir '%v'", dstPath)
+			return copyFileOrCreateDir(path, dstPath, srcInfo, c)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	// step 2: clean everything from dst that is not in src
-	// -- if c.CleanDst:
+	// -- if not c.CleanDst:
+	if !c.CleanDst {
+		c.Log.Info().Msg("config.CleanDst is false, sync done")
+		return nil
+	}
+
+	// c.Log.Info().Msg("SRC " + filesetSrc.String())
+	// c.Log.Info().Msg("DST " + filesetDst.String())
+
 	// for file in filesetDst: file exists in filesetSrc ?
-	//   yes --> continue
-	//   no --> delete
+	for name, dstInfo := range filesetDst.Paths {
+		if !filesetSrc.Contains(name) {
+			c.Log.Info().Msgf("file '%v' does not exist in src, delete", name)
+			err := deleteFileOrDir(filepath.Join(filesetDst.Basepath, name), dstInfo, c)
+			if err != nil {
+				c.Log.Error().Err(err).Msg("deletion failed")
+				// this can sometimes give an error if the parent directory was deleted before...
+			}
+		}
+	}
 	return nil
 }
 
@@ -184,4 +253,14 @@ func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, c *config.
 		return os.Chmod(dst, sourceFileStat.Mode())
 	}
 	return nil
+}
+
+func deleteFileOrDir(dst string, dstInfo fs.FileInfo, c *config.Config) error {
+	if c.DryRun {
+		return nil
+	}
+	if dstInfo.IsDir() {
+		return os.RemoveAll(dst)
+	}
+	return os.Remove(dst)
 }

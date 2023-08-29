@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 
 	"log/slog"
 
@@ -31,11 +30,17 @@ func main() {
 	err := c.Load(os.Args)
 	handleErrFatal(err)
 
-	wd, _ := os.Getwd()
-	src := filepath.Join(wd, "testdata/dirA/")
+	// wd, _ := os.Getwd()
+	// src := filepath.Join(wd, "testdata/dirA/")
+	// handleErrFatal(err)
+	// dst := filepath.Join(wd, "testdata/dirB/")
+	// handleErrFatal(err)
+
+	src := "/home/floo/Documents/Auto/Mondeo/"
 	handleErrFatal(err)
-	dst := filepath.Join(wd, "testdata/dirB/")
+	dst := "/home/floo/Downloads/tmp/"
 	handleErrFatal(err)
+
 	src, dst, err = pathlib.CheckSrcDst(src, dst)
 	handleErrFatal(err)
 
