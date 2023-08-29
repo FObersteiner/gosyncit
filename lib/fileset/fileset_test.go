@@ -34,6 +34,7 @@ func TestNewFileset(t *testing.T) {
 	}
 
 	err = m.Populate()
+	// TODO : add test that produces an error here
 	if err != nil {
 		log.Fatal(err)
 	}

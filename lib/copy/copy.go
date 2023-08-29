@@ -91,15 +91,23 @@ func Mirror(src, dst string, c *config.Config) error {
 	c.Log.Info().Msg(filesetSrc.String())
 	c.Log.Info().Msg(filesetDst.String())
 	// step 1: copy everything from source to dst if src newer
+	// for file in filesetSrc: src file exists in dst ?
+	//   yes --> compare, copy if newer
+	//   no --> copy
+	//
 	// step 2: clean everything from dst that is not in src
+	// -- if c.CleanDst:
+	// for file in filesetDst: file exists in filesetSrc ?
+	//   yes --> continue
+	//   no --> delete
 	return nil
 }
 
 // Sync synchronizes files between src and dst, keeping only the newer versions
 func Sync(src, dst string, c *config.Config) error {
 	c.Log.Info().Msg("SYNC")
-	// step 1: copy everything from source to dst if src newer
-	// step 2: copy everything from dst to src if dst newer
+	// step 1: copy everything from source to dst if src newer or file does not exist dst
+	// step 2: copy everything from dst to src if dst newer or file does not exist in src
 	return nil
 }
 
