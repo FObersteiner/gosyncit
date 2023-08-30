@@ -46,6 +46,7 @@ func main() {
 
 	c.Log.Info().Msgf("config : %s\n---", c)
 	c.Log.Info().Msgf("src:\n%v\ndst:\n%v\n", src, dst)
+
 	f := copy.SelectCopyFunc(dst, c)
 	err = f(src, dst, c)
 	handleErrFatal(err)

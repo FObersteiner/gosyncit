@@ -38,24 +38,24 @@ func SelectCopyFunc(dst string, c *config.Config) CopyFunc {
 
 // MirrorBasic performs a one-way copy from src to dst
 func MirrorBasic(src, dst string, c *config.Config) error {
-	c.Log.Info().Msg("MIRROR BASIC")
+	c.Log.Debug().Msg("MIRROR BASIC")
 	return filepath.Walk(src,
 		func(path string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 			if c.IgnoreHidden && strings.Contains(path, "/.") {
-				c.Log.Info().Msgf("skip   : hidden file '%s'", path)
+				c.Log.Debug().Msgf("skip   : hidden file '%s'", path)
 				return nil
 			}
 			childPath := strings.TrimPrefix(path, src)
 			dstPath := filepath.Join(dst, childPath)
 			if !srcInfo.IsDir() && !srcInfo.Mode().IsRegular() {
 				// TODO : this might be the place to handle symlinks
-				c.Log.Info().Msgf("skip non-regular file '%v'", path)
+				c.Log.Debug().Msgf("skip non-regular file '%v'", path)
 				return nil
 			}
-			c.Log.Info().Msgf("copy / create dir '%v'", dstPath)
+			c.Log.Debug().Msgf("copy / create dir '%v'", dstPath)
 			return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 		},
 	)
@@ -64,7 +64,7 @@ func MirrorBasic(src, dst string, c *config.Config) error {
 // Mirror copies newer files to dst and removes files from dst that do not
 // exist in src
 func Mirror(src, dst string, c *config.Config) error {
-	c.Log.Info().Msg("MIRROR")
+	c.Log.Debug().Msg("MIRROR")
 	filesetSrc, err := fileset.New(src)
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func Mirror(src, dst string, c *config.Config) error {
 				return nil
 			}
 			if c.IgnoreHidden && strings.Contains(path, "/.") {
-				c.Log.Info().Msgf("skip   : hidden file '%s'", path)
+				c.Log.Debug().Msgf("skip   : hidden file '%s'", path)
 				return nil
 			}
 			childPath := strings.TrimPrefix(path, filesetSrc.Basepath)
@@ -102,16 +102,16 @@ func Mirror(src, dst string, c *config.Config) error {
 
 			dstPath := filepath.Join(dst, childPath)
 			if !srcInfo.IsDir() && !srcInfo.Mode().IsRegular() {
-				c.Log.Info().Msgf("skip non-regular file '%v'", path)
+				c.Log.Debug().Msgf("skip non-regular file '%v'", path)
 				return nil
 			}
 
 			if filesetDst.Contains(childPath) {
 				//   yes --> compare, copy if newer
-				c.Log.Info().Msgf("file '%v' exists in dst, compare", childPath)
+				c.Log.Debug().Msgf("file '%v' exists in dst, compare", childPath)
 				dstInfo, _ := os.Stat(filepath.Join(filesetDst.Basepath, childPath))
 				if compare.BasicUnequal(srcInfo, dstInfo) {
-					c.Log.Info().Msg("  --> file in src newer, copy")
+					c.Log.Debug().Msg("  --> file in src newer, copy")
 					err := copyFileOrCreateDir(
 						filepath.Join(filesetSrc.Basepath, childPath),
 						filepath.Join(filesetDst.Basepath, childPath),
@@ -123,12 +123,12 @@ func Mirror(src, dst string, c *config.Config) error {
 					}
 					return nil
 				} else {
-					c.Log.Info().Msg("  --> file in src not newer, skip")
+					c.Log.Debug().Msg("  --> file in src not newer, skip")
 					return nil
 				}
 			} else {
 				//   no --> copy
-				c.Log.Info().Msgf("file '%v' does not exist in dst, copy", childPath)
+				c.Log.Debug().Msgf("file '%v' does not exist in dst, copy", childPath)
 				err := copyFileOrCreateDir(
 					filepath.Join(filesetSrc.Basepath, childPath),
 					filepath.Join(filesetDst.Basepath, childPath),
@@ -140,7 +140,7 @@ func Mirror(src, dst string, c *config.Config) error {
 				}
 			}
 
-			c.Log.Info().Msgf("copy / create dir '%v'", dstPath)
+			c.Log.Debug().Msgf("copy / create dir '%v'", dstPath)
 			return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 		},
 	)
@@ -151,17 +151,17 @@ func Mirror(src, dst string, c *config.Config) error {
 	// step 2: clean everything from dst that is not in src
 	// -- if not c.CleanDst:
 	if !c.CleanDst {
-		c.Log.Info().Msg("config.CleanDst is false, sync done")
+		c.Log.Debug().Msg("config.CleanDst is false, sync done")
 		return nil
 	}
 
-	// c.Log.Info().Msg("SRC " + filesetSrc.String())
-	// c.Log.Info().Msg("DST " + filesetDst.String())
+	// c.Log.Debug().Msg("SRC " + filesetSrc.String())
+	// c.Log.Debug().Msg("DST " + filesetDst.String())
 
 	// for file in filesetDst: file exists in filesetSrc ?
 	for name, dstInfo := range filesetDst.Paths {
 		if !filesetSrc.Contains(name) {
-			c.Log.Info().Msgf("file '%v' does not exist in src, delete", name)
+			c.Log.Debug().Msgf("file '%v' does not exist in src, delete", name)
 			err := deleteFileOrDir(filepath.Join(filesetDst.Basepath, name), dstInfo, c)
 			if err != nil {
 				c.Log.Error().Err(err).Msg("deletion failed")
@@ -174,7 +174,7 @@ func Mirror(src, dst string, c *config.Config) error {
 
 // Sync synchronizes files between src and dst, keeping only the newer versions
 func Sync(src, dst string, c *config.Config) error {
-	c.Log.Info().Msg("SYNC")
+	c.Log.Debug().Msg("SYNC")
 	// step 1: copy everything from source to dst if src newer or file does not exist dst
 	// step 2: copy everything from dst to src if dst newer or file does not exist in src
 	return nil
