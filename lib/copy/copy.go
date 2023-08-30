@@ -36,7 +36,8 @@ func SelectCopyFunc(dst string, c *config.Config) CopyFunc {
 	return Mirror
 }
 
-// MirrorBasic performs a one-way copy from src to dst
+// MirrorBasic performs a one-way copy from src to dst.
+// Any content in dst will be ignored (overwritten)
 func MirrorBasic(src, dst string, c *config.Config) error {
 	c.Log.Debug().Msg("MIRROR BASIC")
 	return filepath.Walk(src,
@@ -148,7 +149,7 @@ func Mirror(src, dst string, c *config.Config) error {
 
 	// step 2: clean everything from dst that is not in src
 	if !c.CleanDst {
-		c.Log.Debug().Msg("config.CleanDst is false, sync done")
+		c.Log.Debug().Msg("config.CleanDst is false, mirror done")
 		return nil
 	}
 	// for file in filesetDst: file exists in filesetSrc ? --> Delete if not.
