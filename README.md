@@ -7,14 +7,11 @@ let's go sync it.
 
 ## TODO
 
-- package structure
-- tests
-- multiple comparison methods (timestamp, md5)
-- mirror loose vs. strict
 - sync (two-way mirror)
+- package structure : separate command functions ?
+- tests --> integration tests with command functions (mirror, sync)
 - follow symlinks ? --> os.Readlink
-- flags
-- config file
-- consider sftp integration...
-- test if cobra / viper can help to standardize flags and config
 - add force write to disk option (`os.File.Sync`)
+- config file, flags (flags override config file)
+- test if cobra / viper can help to standardize flags and config
+- SFTP integration...

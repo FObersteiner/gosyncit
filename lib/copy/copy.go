@@ -51,7 +51,6 @@ func MirrorBasic(src, dst string, c *config.Config) error {
 			childPath := strings.TrimPrefix(path, src)
 			dstPath := filepath.Join(dst, childPath)
 			if !srcInfo.IsDir() && !srcInfo.Mode().IsRegular() {
-				// TODO : this might be the place to handle symlinks
 				c.Log.Debug().Msgf("skip non-regular file '%v'", path)
 				return nil
 			}
@@ -80,7 +79,6 @@ func Mirror(src, dst string, c *config.Config) error {
 		return err
 	}
 
-	// now walk the src dir
 	// step 1: copy everything from source to dst if src newer
 	// for file in filesetSrc: src file exists in dst ?
 	err = filepath.Walk(src,
@@ -149,16 +147,11 @@ func Mirror(src, dst string, c *config.Config) error {
 	}
 
 	// step 2: clean everything from dst that is not in src
-	// -- if not c.CleanDst:
 	if !c.CleanDst {
 		c.Log.Debug().Msg("config.CleanDst is false, sync done")
 		return nil
 	}
-
-	// c.Log.Debug().Msg("SRC " + filesetSrc.String())
-	// c.Log.Debug().Msg("DST " + filesetDst.String())
-
-	// for file in filesetDst: file exists in filesetSrc ?
+	// for file in filesetDst: file exists in filesetSrc ? --> Delete if not.
 	for name, dstInfo := range filesetDst.Paths {
 		if !filesetSrc.Contains(name) {
 			c.Log.Debug().Msgf("file '%v' does not exist in src, delete", name)

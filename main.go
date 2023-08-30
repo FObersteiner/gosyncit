@@ -36,9 +36,9 @@ func main() {
 	// dst := filepath.Join(wd, "testdata/dirB/")
 	// handleErrFatal(err)
 
-	src := "/home/floo/Documents/Auto/Mondeo/"
+	src := "/home/va6504/Documents/Dienstreisen/"
 	handleErrFatal(err)
-	dst := "/home/floo/Downloads/tmp/"
+	dst := "/home/va6504/Downloads/tmp/"
 	handleErrFatal(err)
 
 	src, dst, err = pathlib.CheckSrcDst(src, dst)
