@@ -1,7 +1,6 @@
 package fileset_test
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,31 +11,31 @@ import (
 func TestNewFileset(t *testing.T) {
 	_, err := fm.New("")
 	if err != fm.ErrInvalidBasepath {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	data := []byte("content")
 	dirA, err := os.MkdirTemp("", "dirA")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirA)
 
 	fname := "tmpfileA"
 	file := filepath.Join(dirA, fname)
 	if err := os.WriteFile(file, data, 0644); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	m, err := fm.New(dirA)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	err = m.Populate()
 	// TODO : add test that produces an error here
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	//	log.Println(m.String())

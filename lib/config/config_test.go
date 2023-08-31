@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"log"
 	"testing"
 
 	"gosyncit/lib/config"
@@ -11,7 +10,7 @@ func TestLoad(t *testing.T) {
 	c := &config.Config{}
 	err := c.Load([]string{"", "-dryRun=false"})
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	if c.DryRun {
 		t.Log("dry run should be false")

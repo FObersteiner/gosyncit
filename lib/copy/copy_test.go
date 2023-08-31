@@ -2,7 +2,6 @@ package copy_test
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -24,7 +23,7 @@ func TestSelect(t *testing.T) {
 	c := &config.Config{}
 	err := c.Load([]string{"", "-sync=false"})
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	f := cp.SelectCopyFunc("/tmp/nonexisting", c)
 	if reflect.ValueOf(f).Pointer() != reflect.ValueOf(funcMirrorbasic).Pointer() {
@@ -34,7 +33,7 @@ func TestSelect(t *testing.T) {
 
 	dirA, err := os.MkdirTemp("", "dirA")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirA)
 	f = cp.SelectCopyFunc(dirA, c)
@@ -45,7 +44,7 @@ func TestSelect(t *testing.T) {
 
 	file := filepath.Join(dirA, "tmpfileA")
 	if err := os.WriteFile(file, []byte("content"), 0655); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	f = cp.SelectCopyFunc(dirA, c)
 	if reflect.ValueOf(f).Pointer() != reflect.ValueOf(funcMirror).Pointer() {
@@ -55,7 +54,7 @@ func TestSelect(t *testing.T) {
 
 	err = c.Load([]string{"", "-sync=true"})
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	f = cp.SelectCopyFunc(dirA, c)
 	if reflect.ValueOf(f).Pointer() != reflect.ValueOf(funcSync).Pointer() {
@@ -73,19 +72,19 @@ func TestCopyFile(t *testing.T) {
 
 	dirA, err := os.MkdirTemp("", "dirA")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirA)
 
 	dirB, err := os.MkdirTemp("", "dirB")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirB)
 
 	file := filepath.Join(dirA, "tmpfileA")
 	if err := os.WriteFile(file, []byte("content"), 0655); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	fstSrc, _ := os.Stat(file)
@@ -94,17 +93,17 @@ func TestCopyFile(t *testing.T) {
 	dst := filepath.Join(dirB, "tmpfileA")
 	err = cp.CopyFile(file, dst)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	f1, err1 := os.ReadFile(file)
 	if err1 != nil {
-		log.Fatal(err1)
+		t.Fatal(err1)
 	}
 
 	f2, err2 := os.ReadFile(dst)
 	if err2 != nil {
-		log.Fatal(err2)
+		t.Fatal(err2)
 	}
 
 	if !bytes.Equal(f1, f2) {
@@ -118,7 +117,7 @@ func TestCopyFile(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		err = cp.CopyPerm(file, dst)
 		if err != nil {
-			log.Fatal(err)
+			t.Fatal(err)
 		}
 		fstDst2, _ := os.Stat(dst)
 		// log.Println(fstDst2.Mode())

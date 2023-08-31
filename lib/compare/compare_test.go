@@ -1,7 +1,6 @@
 package compare_test
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,23 +11,23 @@ import (
 func TestBasic(t *testing.T) {
 	dirA, err := os.MkdirTemp("", "dirA")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirA)
 
 	dirB, err := os.MkdirTemp("", "dirB")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirB)
 
 	fileA := filepath.Join(dirA, "tmpfileA")
 	if err := os.WriteFile(fileA, []byte("file A"), 0644); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	fileB := filepath.Join(dirB, "tmpfileA")
 	if err := os.WriteFile(fileB, []byte("file B"), 0644); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	fileInfoA, _ := os.Stat(fileA)
@@ -45,28 +44,28 @@ func TestBasic(t *testing.T) {
 func TestDeep(t *testing.T) {
 	dirA, err := os.MkdirTemp("", "dirA")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirA)
 
 	dirB, err := os.MkdirTemp("", "dirB")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(dirB)
 
 	fileA := filepath.Join(dirA, "tmpfileA")
 	if err := os.WriteFile(fileA, []byte("file A"), 0644); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	fileB := filepath.Join(dirB, "tmpfileA")
 	if err := os.WriteFile(fileB, []byte("file B"), 0644); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	equal, err := compare.DeepEqual(fileA, fileB)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	if equal {
 		t.Log("expected deep comparison to return false, got true")
