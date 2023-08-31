@@ -31,11 +31,14 @@ func CheckSrcDst(src, dst string) (string, string, error) {
 func CheckDirPath(path string) (string, error) {
 	path = filepath.Clean(path)
 	stats, err := os.Stat(path)
-	if err != nil {
+	if os.IsNotExist(err) {
+		return path, fmt.Errorf("specified directory '%v' does not exist", path)
+	}
+	if err != nil { // some other error ?!
 		return path, err
 	}
 	if !stats.IsDir() {
-		return path, fmt.Errorf("specified '%v' directory is a file", path)
+		return path, fmt.Errorf("specified directory '%v' is a file", path)
 	}
 	return path, nil
 }

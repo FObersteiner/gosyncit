@@ -55,7 +55,7 @@ func MirrorBasic(src, dst string, c *config.Config) error {
 				c.Log.Debug().Msgf("skip non-regular file '%v'", path)
 				return nil
 			}
-			c.Log.Debug().Msgf("copy / create dir '%v'", dstPath)
+			c.Log.Debug().Msgf("copy/create file/dir '%v'", dstPath)
 			return copyFileOrCreateDir(path, dstPath, srcInfo, c)
 		},
 	)
@@ -169,9 +169,15 @@ func Mirror(src, dst string, c *config.Config) error {
 // Sync synchronizes files between src and dst, keeping only the newer versions
 func Sync(src, dst string, c *config.Config) error {
 	c.Log.Debug().Msg("SYNC")
+	c.CleanDst = false
 	// step 1: copy everything from source to dst if src newer or file does not exist dst
+	err := Mirror(src, dst, c)
+	if err != nil {
+		return err
+	}
 	// step 2: copy everything from dst to src if dst newer or file does not exist in src
-	return nil
+	err = Mirror(dst, src, c)
+	return err
 }
 
 func CopyFile(src, dst string) error {
