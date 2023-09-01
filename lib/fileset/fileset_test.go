@@ -62,3 +62,11 @@ func TestNewFileset(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func BenchmarkFileset(b *testing.B) {
+	m, err := fm.New("/usr")
+	if err != nil {
+		b.Fatal(err)
+	}
+	m.Populate()
+}
