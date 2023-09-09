@@ -1,0 +1,45 @@
+# Ignore binaries with no extensions
+*
+!*.*
+!*/
+!LICENSE
+
+# Office stuff
+*.doc
+*.docx
+*.pptx
+*.xlsx
+*~lock*
+
+# vs code
+*.code-workspace
+.vscode
+.code
+
+# Binaries for programs and plugins
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# temporary / local stuff
+.old
+testdata/*
+tmp/*
+tmp
+.old/*
+
+# Dependency directories (remove the comment below to include it)
+vendor/
+
+# logging
+log/
+*.log

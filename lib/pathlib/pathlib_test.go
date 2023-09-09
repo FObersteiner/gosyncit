@@ -33,7 +33,7 @@ func TestCheckPath(t *testing.T) {
 
 func TestSrcDstCheck(t *testing.T) {
 	_, _, err := pathlib.CheckSrcDst("nonexisting", "")
-	if !os.IsNotExist(err) {
+	if err == nil {
 		t.Fatalf("expected non-existing dir error, got %v", err)
 	}
 

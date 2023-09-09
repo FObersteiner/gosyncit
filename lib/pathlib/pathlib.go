@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 // CheckSrcDst cleans input path strings 'src' and 'dst'. Src and dst must not be identical,
@@ -29,7 +31,7 @@ func CheckSrcDst(src, dst string) (string, string, error) {
 // Files are considered invalid, must be directory.
 // Non-existing directories are considered an error here.
 func CheckDirPath(path string) (string, error) {
-	path = filepath.Clean(path)
+	path = Resolve(filepath.Clean(path))
 	stats, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return path, fmt.Errorf("specified directory '%v' does not exist", path)
@@ -41,4 +43,26 @@ func CheckDirPath(path string) (string, error) {
 		return path, fmt.Errorf("specified directory '%v' is a file", path)
 	}
 	return path, nil
+}
+
+// ResolveHomeDir converts potential home dir ~ into an absolute path
+func ResolveHomeDir(path string) string {
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+	if path == "~" {
+		path = dir
+	} else if strings.HasPrefix(path, "~/") {
+		path = filepath.Join(dir, path[2:])
+	}
+	return path
+}
+
+// Resolve converts potential home dir ~ and cd .. into an absolute path
+func Resolve(path string) string {
+	path = ResolveHomeDir(path)
+	path = filepath.Clean(path)
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return path
 }

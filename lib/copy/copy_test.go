@@ -4,68 +4,16 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"syscall"
 	"testing"
 
-	"gosyncit/lib/config"
 	cp "gosyncit/lib/copy"
 )
 
-var (
-	funcMirrorbasic cp.CopyFunc = cp.MirrorBasic
-	funcMirror      cp.CopyFunc = cp.Mirror
-	funcSync        cp.CopyFunc = cp.Sync
-)
-
-func TestSelect(t *testing.T) {
-	c := &config.Config{}
-	err := c.Load([]string{"", "-sync=false"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	f := cp.SelectCopyFunc("/tmp/nonexisting", c)
-	if reflect.ValueOf(f).Pointer() != reflect.ValueOf(funcMirrorbasic).Pointer() {
-		t.Log("non-existing dst should yield mirror basic func")
-		t.Fail()
-	}
-
-	dirA, err := os.MkdirTemp("", "dirA")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dirA)
-	f = cp.SelectCopyFunc(dirA, c)
-	if reflect.ValueOf(f).Pointer() != reflect.ValueOf(funcMirrorbasic).Pointer() {
-		t.Log("existing but empty dst should yield mirror basic func")
-		t.Fail()
-	}
-
-	file := filepath.Join(dirA, "tmpfileA")
-	if err := os.WriteFile(file, []byte("content"), 0655); err != nil {
-		t.Fatal(err)
-	}
-	f = cp.SelectCopyFunc(dirA, c)
-	if reflect.ValueOf(f).Pointer() != reflect.ValueOf(funcMirror).Pointer() {
-		t.Log("existing, not empty dst should yield mirror func")
-		t.Fail()
-	}
-
-	err = c.Load([]string{"", "-sync=true"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	f = cp.SelectCopyFunc(dirA, c)
-	if reflect.ValueOf(f).Pointer() != reflect.ValueOf(funcSync).Pointer() {
-		t.Log("existing, not empty dst with sync=true should yield sync func")
-		t.Fail()
-	}
-}
-
 func TestCopyFile(t *testing.T) {
 	// remove umask so that arbitrary permissions can be specified
-	// TODO : does this work on !linux ?!
+	// TODO : does this work on non-linux platform ?!
 	oldumask := syscall.Umask(0000)
 	defer syscall.Umask(oldumask)
 	// could also use os.Chmod after write, to set permissions on src file

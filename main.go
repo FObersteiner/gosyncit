@@ -1,47 +1,28 @@
+/*
+Copyright © 2023 Florian Obersteiner <f.obersteiner@posteo.de>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 package main
 
-import (
-	"os"
-
-	"gosyncit/lib/config"
-	"gosyncit/lib/copy"
-	"gosyncit/lib/pathlib"
-)
-
-func handleErrFatal(err error, c *config.Config) {
-	if err != nil {
-		c.Log.Fatal().Err(err).Msg("need to stop.")
-	}
-}
-
-//-----------------------------------------------------------------------------
-//
-// TODO :
-// func mirror (dst exists and is not empty)
-// func sync
-//
-//-----------------------------------------------------------------------------
+import "gosyncit/cmd"
 
 func main() {
-	c := &config.Config{}
-	err := c.Load(os.Args)
-	handleErrFatal(err, c)
-
-	// wd, _ := os.Getwd()
-	// src := filepath.Join(wd, "testdata/dirA/")
-	// handleErrFatal(err)
-	// dst := filepath.Join(wd, "testdata/dirB/")
-	// handleErrFatal(err)
-
-	src, err := pathlib.CheckDirPath("/home/va6504/Downloads/A/")
-	handleErrFatal(err, c)
-	dst, err := pathlib.CheckDirPath("/home/va6504/Downloads/B/")
-	handleErrFatal(err, c)
-
-	c.Log.Info().Msgf("config : %s\n---", c)
-	c.Log.Info().Msgf("src:\n%v\ndst:\n%v\n", src, dst)
-
-	f := copy.SelectCopyFunc(dst, c)
-	err = f(src, dst, c)
-	handleErrFatal(err, c)
+	cmd.Execute()
 }
