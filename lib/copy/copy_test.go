@@ -39,7 +39,7 @@ func TestCopyFile(t *testing.T) {
 	// log.Println(fstSrc.Mode())
 
 	dst := filepath.Join(dirB, "tmpfileA")
-	err = cp.CopyFile(file, dst)
+	err = cp.CopyFile(file, dst, fstSrc, false)
 	if err != nil {
 		t.Fatal(err)
 	}

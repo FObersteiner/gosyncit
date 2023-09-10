@@ -18,46 +18,84 @@ const (
 )
 
 // SimpleCopy makes a simple copy of directory 'src' to directory 'dst'.
-func SimpleCopy(src, dst string, dry bool) error {
+func SimpleCopy(src, dst string, dry, clean bool) error {
+	fmt.Println("Called SimpelCopy, dry, clean:", dry, clean)
 	src, dst, err := pathlib.CheckSrcDst(src, dst)
 	if err != nil {
+		fmt.Println("checkpath error")
 		return err
 	}
 
-	return filepath.Walk(src,
-		func(path string, srcInfo os.FileInfo, err error) error {
+	if clean {
+		fmt.Println("deleting dst for a clean copy...")
+		if !dry {
+			err := os.RemoveAll(dst)
 			if err != nil {
 				return err
 			}
-			childPath := strings.TrimPrefix(path, src)
+		}
+	}
+
+	return filepath.Walk(src,
+		func(srcPath string, srcInfo os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			childPath := strings.TrimPrefix(srcPath, src)
 			dstPath := filepath.Join(dst, childPath)
-			if !srcInfo.IsDir() && !srcInfo.Mode().IsRegular() {
-				fmt.Printf("skip non-regular file '%v'\n", path)
+
+			if srcInfo.IsDir() {
+				fmt.Printf("create dir '%s'\n", dstPath)
+				return createDir(dstPath, dry)
+			}
+
+			if !srcInfo.Mode().IsRegular() {
+				fmt.Printf("skip non-regular file '%s'\n", srcPath)
 				return nil
 			}
-			fmt.Printf("copy/create file/dir '%v'\n", dstPath)
-			return copyFileOrCreateDir(path, dstPath, srcInfo, dry)
+
+			// SimpleCopy ignores existing files:
+			fmt.Printf("copy file '%s'\n", srcPath)
+			return CopyFile(srcPath, dstPath, srcInfo, dry)
+
+			// TODO : mirror
+			// A) directory.
+			//   exists in dst?
+			//     no  --> create.
+			//     yes --> skip.
+			// B)
+			//   exists in dst?
+			//     no  --> write.
+			//     yes --> overwrite?
+			//       yes --> write.
+			//       no  --> src younger?
+			//         yes --> write.
+			//         no  --> skip.
 		},
 	)
 }
 
-// copyFileOrCreateDir is wraps the creation of a directory or a file, depending
-// on the src type.
-func copyFileOrCreateDir(src, dst string, sourceFileStat fs.FileInfo, dry bool) error {
+// createDir wraps os.MkdirAll and ignores dir exists error
+func createDir(dst string, dry bool) error {
 	if dry {
 		return nil
 	}
-	if sourceFileStat.IsDir() {
-		return os.MkdirAll(dst, defaultModeDir)
+	if err := os.MkdirAll(dst, defaultModeDir); err != nil && !os.IsExist(err) {
+		return err
+	}
+	return nil
+}
+
+// CopyFile copies src to dst. If dst exists, it will be overwritten.
+func CopyFile(src, dst string, sourceFileStat fs.FileInfo, dry bool) error {
+	if dry {
+		return nil
 	}
 	if !sourceFileStat.Mode().IsRegular() {
 		return fmt.Errorf("%s is not a regular file", src)
 	}
-	return CopyFile(src, dst)
-}
 
-// CopyFile copies src to dst. If dst exists, it will be overwritten.
-func CopyFile(src, dst string) error {
 	source, err := os.Open(src)
 	if err != nil {
 		return err

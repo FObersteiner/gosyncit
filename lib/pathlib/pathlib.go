@@ -21,7 +21,7 @@ func CheckSrcDst(src, dst string) (string, string, error) {
 	if err != nil && !os.IsNotExist(err) {
 		return "", "", err
 	}
-	if src == dst {
+	if srcCleaned == dstCleaned {
 		return "", "", errors.New("src and dst must not be identical")
 	}
 	return srcCleaned, dstCleaned, nil
@@ -33,10 +33,7 @@ func CheckSrcDst(src, dst string) (string, string, error) {
 func CheckDirPath(path string) (string, error) {
 	path = Resolve(filepath.Clean(path))
 	stats, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return path, fmt.Errorf("specified directory '%v' does not exist", path)
-	}
-	if err != nil { // some other error ?!
+	if err != nil {
 		return path, err
 	}
 	if !stats.IsDir() {

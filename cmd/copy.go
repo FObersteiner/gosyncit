@@ -31,7 +31,10 @@ import (
 	"gosyncit/lib/copy"
 )
 
-var dryRun bool
+var (
+	dryRun   bool
+	cleanDst bool
+)
 
 // copyCmd represents the copy command
 var copyCmd = &cobra.Command{
@@ -56,7 +59,9 @@ var copyCmd = &cobra.Command{
 		}
 
 		dry := viper.GetBool("dryrun")
-		return copy.SimpleCopy(src, dst, dry)
+		clean := viper.GetBool("clean")
+
+		return copy.SimpleCopy(src, dst, dry, clean)
 	},
 }
 
@@ -66,7 +71,13 @@ func init() {
 	copyCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
 	err := viper.BindPFlag("dryrun", copyCmd.Flags().Lookup("dryrun"))
 	if err != nil {
-		log.Fatal("error binding viper to dryrun flag:", err)
+		log.Fatal("error binding viper to dryrun' flag:", err)
+	}
+
+	copyCmd.Flags().BoolVarP(&cleanDst, "clean", "x", false, "remove everything from dst for a clean copy")
+	err = viper.BindPFlag("clean", copyCmd.Flags().Lookup("clean"))
+	if err != nil {
+		log.Fatal("error binding viper to 'clean' flag:", err)
 	}
 
 	rootCmd.AddCommand(copyCmd)
