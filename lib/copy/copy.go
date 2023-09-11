@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"gosyncit/lib/pathlib"
 )
@@ -19,6 +20,9 @@ const (
 
 // SimpleCopy makes a simple copy of directory 'src' to directory 'dst'.
 func SimpleCopy(src, dst string, dry, clean bool) error {
+	var nItems, nBytes uint
+	t0 := time.Now()
+
 	fmt.Println("Called SimpelCopy, dry, clean:", dry, clean)
 	src, dst, err := pathlib.CheckSrcDst(src, dst)
 	if err != nil {
@@ -36,11 +40,13 @@ func SimpleCopy(src, dst string, dry, clean bool) error {
 		}
 	}
 
-	return filepath.Walk(src,
+	err = filepath.Walk(src,
 		func(srcPath string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
+			nItems++
+			nBytes += uint(srcInfo.Size())
 
 			childPath := strings.TrimPrefix(srcPath, src)
 			dstPath := filepath.Join(dst, childPath)
@@ -74,6 +80,18 @@ func SimpleCopy(src, dst string, dry, clean bool) error {
 			//         no  --> skip.
 		},
 	)
+	if err != nil {
+		return err
+	}
+	dt := time.Since(t0)
+	secs := float64(dt) / float64(time.Second)
+	fmt.Printf("~~~ done. ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
+		nItems,
+		byteCount(nBytes),
+		dt,
+		byteCount(uint(float64(nBytes)/secs)),
+	)
+	return nil
 }
 
 // createDir wraps os.MkdirAll and ignores dir exists error
@@ -132,4 +150,18 @@ func CopyPerm(src, dst string) error {
 	}
 
 	return os.Chmod(dst, srcStat.Mode())
+}
+
+func byteCount(b uint) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB",
+		float64(b)/float64(div), "kMGTPE"[exp])
 }
