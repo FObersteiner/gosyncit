@@ -5,101 +5,20 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
-	"strings"
-	"time"
-
-	"gosyncit/lib/pathlib"
 )
 
 const (
 	BUFFERSIZE                  = 4096
-	defaultModeDir  fs.FileMode = 0755 // rwxr-xr-x
-	defaultModeFile fs.FileMode = 0644 // rw-r--r--
+	DefaultModeDir  fs.FileMode = 0755 // rwxr-xr-x
+	DefaultModeFile fs.FileMode = 0644 // rw-r--r--
 )
 
-// SimpleCopy makes a simple copy of directory 'src' to directory 'dst'.
-func SimpleCopy(src, dst string, dry, clean bool) error {
-	var nItems, nBytes uint
-	t0 := time.Now()
-
-	fmt.Println("Called SimpelCopy, dry, clean:", dry, clean)
-	src, dst, err := pathlib.CheckSrcDst(src, dst)
-	if err != nil {
-		fmt.Println("checkpath error")
-		return err
-	}
-
-	if clean {
-		fmt.Println("deleting dst for a clean copy...")
-		if !dry {
-			err := os.RemoveAll(dst)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	err = filepath.Walk(src,
-		func(srcPath string, srcInfo os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			nItems++
-			nBytes += uint(srcInfo.Size())
-
-			childPath := strings.TrimPrefix(srcPath, src)
-			dstPath := filepath.Join(dst, childPath)
-
-			if srcInfo.IsDir() {
-				fmt.Printf("create dir '%s'\n", dstPath)
-				return createDir(dstPath, dry)
-			}
-
-			if !srcInfo.Mode().IsRegular() {
-				fmt.Printf("skip non-regular file '%s'\n", srcPath)
-				return nil
-			}
-
-			// SimpleCopy ignores existing files:
-			fmt.Printf("copy file '%s'\n", srcPath)
-			return CopyFile(srcPath, dstPath, srcInfo, dry)
-
-			// TODO : mirror
-			// A) directory.
-			//   exists in dst?
-			//     no  --> create.
-			//     yes --> skip.
-			// B)
-			//   exists in dst?
-			//     no  --> write.
-			//     yes --> overwrite?
-			//       yes --> write.
-			//       no  --> src younger?
-			//         yes --> write.
-			//         no  --> skip.
-		},
-	)
-	if err != nil {
-		return err
-	}
-	dt := time.Since(t0)
-	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("~~~ done. ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
-		nItems,
-		byteCount(nBytes),
-		dt,
-		byteCount(uint(float64(nBytes)/secs)),
-	)
-	return nil
-}
-
 // createDir wraps os.MkdirAll and ignores dir exists error
-func createDir(dst string, dry bool) error {
+func CreateDir(dst string, dry bool) error {
 	if dry {
 		return nil
 	}
-	if err := os.MkdirAll(dst, defaultModeDir); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll(dst, DefaultModeDir); err != nil && !os.IsExist(err) {
 		return err
 	}
 	return nil
@@ -152,7 +71,7 @@ func CopyPerm(src, dst string) error {
 	return os.Chmod(dst, srcStat.Mode())
 }
 
-func byteCount(b uint) string {
+func ByteCount(b uint) string {
 	const unit = 1024
 	if b < unit {
 		return fmt.Sprintf("%d B", b)
@@ -164,4 +83,14 @@ func byteCount(b uint) string {
 	}
 	return fmt.Sprintf("%.1f %cB",
 		float64(b)/float64(div), "kMGTPE"[exp])
+}
+
+func DeleteFileOrDir(dst string, dstInfo fs.FileInfo, dry bool) error {
+	if dry {
+		return nil
+	}
+	if dstInfo.IsDir() {
+		return os.RemoveAll(dst)
+	}
+	return os.Remove(dst)
 }

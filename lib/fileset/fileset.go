@@ -12,7 +12,7 @@ var ErrInvalidBasepath = errors.New("basepath must be an existing directory")
 
 // Fileset stores a set of file paths and maps them to according os.FileInfo
 type Fileset struct {
-	Paths    map[string]os.FileInfo // TODO : is fileinfo useful here or could it be just a struct ?
+	Paths    map[string]os.FileInfo
 	Basepath string
 }
 
@@ -22,6 +22,10 @@ func New(basepath string) (*Fileset, error) {
 		return nil, ErrInvalidBasepath
 	}
 	info, err := os.Stat(basepath)
+	if os.IsNotExist(err) {
+		_ = os.MkdirAll(basepath, 0755)
+		info, err = os.Stat(basepath)
+	}
 	if err != nil {
 		return nil, ErrInvalidBasepath
 	}

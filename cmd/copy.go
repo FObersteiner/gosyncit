@@ -23,12 +23,18 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"gosyncit/lib/copy"
+	"gosyncit/lib/pathlib"
 )
 
 var (
@@ -40,12 +46,12 @@ var (
 var copyCmd = &cobra.Command{
 	Use:     "copy",
 	Aliases: []string{"cp"},
-	Short:   "copy src to dst",
+	Short:   "copy directory 'src' to directory 'dst'",
 	Long: `Copy the content of source directory to destination directory.
-  If destination exists, any existing content will be ignored.`,
+  If destination exists, any existing content will be ignored (overwritten).`,
 	Args:      cobra.MaximumNArgs(2),
 	ValidArgs: []string{"src", "dst"},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		src := viper.GetString("src")
 		dst := viper.GetString("dst")
 
@@ -61,11 +67,13 @@ var copyCmd = &cobra.Command{
 		dry := viper.GetBool("dryrun")
 		clean := viper.GetBool("clean")
 
-		return copy.SimpleCopy(src, dst, dry, clean)
+		return SimpleCopy(src, dst, dry, clean)
 	},
 }
 
 func init() {
+	rootCmd.AddCommand(copyCmd)
+
 	copyCmd.Flags().SortFlags = false
 
 	copyCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
@@ -79,6 +87,65 @@ func init() {
 	if err != nil {
 		log.Fatal("error binding viper to 'clean' flag:", err)
 	}
+}
 
-	rootCmd.AddCommand(copyCmd)
+// SimpleCopy makes a copy of directory 'src' to directory 'dst'.
+func SimpleCopy(src, dst string, dry, clean bool) error {
+	var nItems, nBytes uint
+	t0 := time.Now()
+
+	src, dst, err := pathlib.CheckSrcDst(src, dst)
+	if err != nil {
+		fmt.Println("path check: error")
+		return err
+	}
+
+	if clean {
+		fmt.Println("deleting dst for a clean copy...")
+		if !dry {
+			err := os.RemoveAll(dst)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	err = filepath.Walk(src,
+		func(srcPath string, srcInfo os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			nItems++
+			nBytes += uint(srcInfo.Size())
+
+			childPath := strings.TrimPrefix(srcPath, src)
+			dstPath := filepath.Join(dst, childPath)
+
+			if srcInfo.IsDir() {
+				fmt.Printf("create dir '%s'\n", dstPath)
+				return copy.CreateDir(dstPath, dry)
+			}
+
+			if !srcInfo.Mode().IsRegular() {
+				fmt.Printf("skip non-regular file '%s'\n", srcPath)
+				return nil
+			}
+
+			// SimpleCopy ignores existing files:
+			fmt.Printf("copy file '%s'\n", srcPath)
+			return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
+		},
+	)
+	if err != nil {
+		return err
+	}
+	dt := time.Since(t0)
+	secs := float64(dt) / float64(time.Second)
+	fmt.Printf("~~~ copy done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
+		nItems,
+		copy.ByteCount(nBytes),
+		dt,
+		copy.ByteCount(uint(float64(nBytes)/secs)),
+	)
+	return nil
 }

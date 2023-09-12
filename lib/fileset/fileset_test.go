@@ -68,5 +68,5 @@ func BenchmarkFileset(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	m.Populate()
+	_ = m.Populate()
 }
