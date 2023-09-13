@@ -33,8 +33,12 @@ func TestNewFileset(t *testing.T) {
 	}
 
 	err = m.Populate()
-	// TODO : add test that produces an error here
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = fm.New("not-a-directory")
+	if err != fm.ErrInvalidBasepath {
 		t.Fatal(err)
 	}
 
