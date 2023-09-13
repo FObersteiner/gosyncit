@@ -132,9 +132,12 @@ func SimpleCopy(src, dst string, dry, clean bool) error {
 			return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 		},
 	)
+
 	if err != nil {
+		fmt.Println("src filepath walk error:", err)
 		return err
 	}
+
 	dt := time.Since(t0)
 	secs := float64(dt) / float64(time.Second)
 	fmt.Printf("~~~ COPY done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",

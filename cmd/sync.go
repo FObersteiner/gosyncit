@@ -181,6 +181,7 @@ func Sync(src, dst string, dry bool) error {
 	)
 
 	if err != nil {
+		fmt.Println("src filepath walk error:", err)
 		return err
 	}
 
@@ -244,12 +245,13 @@ func Sync(src, dst string, dry bool) error {
 	)
 
 	if err != nil {
+		fmt.Println("dst filepath walk error:", err)
 		return err
 	}
 
 	dt := time.Since(t0)
 	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("~~~ SYNC done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
+	fmt.Printf("~~~ SYNC done ~~~\n%v items, %v, in %v (~%v per second)\n~~~\n",
 		nItems,
 		copy.ByteCount(nBytes),
 		dt,

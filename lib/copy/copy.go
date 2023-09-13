@@ -25,6 +25,7 @@ func CreateDir(dst string, dry bool) error {
 }
 
 // CopyFile copies src to dst. If dst exists, it will be overwritten.
+// mtime and atime of the destination file will be set to that of the source file
 func CopyFile(src, dst string, sourceFileStat fs.FileInfo, dry bool) error {
 	if dry {
 		return nil
@@ -58,6 +59,11 @@ func CopyFile(src, dst string, sourceFileStat fs.FileInfo, dry bool) error {
 			return err
 		}
 	}
+
+	if err := os.Chtimes(dst, sourceFileStat.ModTime(), sourceFileStat.ModTime()); err != nil {
+		return nil
+	}
+
 	return nil
 }
 
