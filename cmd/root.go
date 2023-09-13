@@ -30,8 +30,10 @@ import (
 )
 
 var (
-	version = "0.0.1"
-	cfgFile string
+	version  = "0.0.3"
+	cfgFile  string
+	dryRun   bool
+	cleanDst bool
 )
 
 // rootCmd represents the base command when called without any subcommands

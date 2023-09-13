@@ -22,10 +22,6 @@ func New(basepath string) (*Fileset, error) {
 		return nil, ErrInvalidBasepath
 	}
 	info, err := os.Stat(basepath)
-	if os.IsNotExist(err) {
-		_ = os.MkdirAll(basepath, 0755)
-		info, err = os.Stat(basepath)
-	}
 	if err != nil {
 		return nil, ErrInvalidBasepath
 	}

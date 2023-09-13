@@ -11,6 +11,11 @@ const BUFFERSIZE = 4096
 // BasicUnequal returns true if source modification time is after that of dst modification time,
 // or file sizes do not match.
 func BasicUnequal(srcInfo, dstInfo os.FileInfo) bool {
+	// fmt.Println("src newer?", srcInfo.ModTime().After(dstInfo.ModTime()))
+	// if srcInfo.ModTime().After(dstInfo.ModTime()) {
+	// 	fmt.Println(srcInfo.ModTime(), dstInfo.ModTime())
+	// }
+	// fmt.Println("file sizes do not match?", (srcInfo.Size() != dstInfo.Size()))
 	return srcInfo.ModTime().After(dstInfo.ModTime()) || (srcInfo.Size() != dstInfo.Size())
 }
 

@@ -24,6 +24,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -39,12 +40,6 @@ import (
 	"gosyncit/lib/pathlib"
 )
 
-// var (
-// 	dryRun   bool
-// 	cleanDst bool
-// )
-
-// mirrorCmd represents the mirror command
 var mirrorCmd = &cobra.Command{
 	Use:     "mirror",
 	Aliases: []string{"mi"},
@@ -81,7 +76,7 @@ func init() {
 	mirrorCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
 	err := viper.BindPFlag("dryrun", mirrorCmd.Flags().Lookup("dryrun"))
 	if err != nil {
-		log.Fatal("error binding viper to dryrun' flag:", err)
+		log.Fatal("error binding viper to 'dryrun' flag:", err)
 	}
 
 	mirrorCmd.Flags().BoolVarP(&cleanDst, "clean", "x", true, "remove everything from dst that is not found in source")
@@ -92,7 +87,8 @@ func init() {
 }
 
 func Mirror(src, dst string, dry, clean bool) error {
-	// fmt.Println(src, dst, dry, clean)
+	fmt.Println("~~~ MIRROR ~~~")
+
 	var nItems, nBytes uint
 	t0 := time.Now()
 
@@ -107,17 +103,24 @@ func Mirror(src, dst string, dry, clean bool) error {
 		fmt.Println("file set creation: error")
 		return err
 	}
-	filesetDst, err := fileset.New(dst)
-	if err != nil {
-		fmt.Println("file set creation: error")
-		return err
+
+	if !strings.HasSuffix(dst, string(os.PathSeparator)) {
+		dst += string(os.PathSeparator)
+	}
+	filesetDst := fileset.Fileset{
+		Basepath: dst,
+		Paths:    make(map[string]fs.FileInfo),
 	}
 
 	// we need a fileset for the destination, to check against while walking the src
 	// for file in filesetSrc: src file exists in dst ?
 	err = filesetDst.Populate()
 	if err != nil {
-		return err
+		fmt.Println("dst fileset population got error", err)
+		if !dry {
+			fmt.Println("dst might not exist, try to create.")
+			_ = os.MkdirAll(dst, copy.DefaultModeDir)
+		}
 	}
 
 	// fmt.Println("\nfileSet DST:")

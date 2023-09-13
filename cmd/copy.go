@@ -37,12 +37,6 @@ import (
 	"gosyncit/lib/pathlib"
 )
 
-var (
-	dryRun   bool
-	cleanDst bool
-)
-
-// copyCmd represents the copy command
 var copyCmd = &cobra.Command{
 	Use:     "copy",
 	Aliases: []string{"cp"},
@@ -79,7 +73,7 @@ func init() {
 	copyCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
 	err := viper.BindPFlag("dryrun", copyCmd.Flags().Lookup("dryrun"))
 	if err != nil {
-		log.Fatal("error binding viper to dryrun' flag:", err)
+		log.Fatal("error binding viper to 'dryrun' flag:", err)
 	}
 
 	copyCmd.Flags().BoolVarP(&cleanDst, "clean", "x", false, "remove everything from dst for a clean copy")
@@ -91,6 +85,8 @@ func init() {
 
 // SimpleCopy makes a copy of directory 'src' to directory 'dst'.
 func SimpleCopy(src, dst string, dry, clean bool) error {
+	fmt.Println("~~~ COPY ~~~")
+
 	var nItems, nBytes uint
 	t0 := time.Now()
 
@@ -141,7 +137,7 @@ func SimpleCopy(src, dst string, dry, clean bool) error {
 	}
 	dt := time.Since(t0)
 	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("~~~ copy done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
+	fmt.Printf("~~~ COPY done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
 		nItems,
 		copy.ByteCount(nBytes),
 		dt,
