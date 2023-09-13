@@ -8,5 +8,4 @@ let's go sync it.
 
 ## TODO
 
-- add github action to run tests
-- add integration tests ?
+- add integration tests ? sync at least ...
