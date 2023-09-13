@@ -36,7 +36,6 @@ func TestCopyFile(t *testing.T) {
 	}
 
 	fstSrc, _ := os.Stat(file)
-	// log.Println(fstSrc.Mode())
 
 	dst := filepath.Join(dirB, "tmpfileA")
 	err = cp.CopyFile(file, dst, fstSrc, false)
@@ -59,16 +58,19 @@ func TestCopyFile(t *testing.T) {
 		t.Fail()
 	}
 
-	// fstDst, _ := os.Stat(dst)
-	// log.Printf("%o\n", fstDst.Mode())
+	fstDst, _ := os.Stat(dst)
+	if fstSrc.ModTime() != fstDst.ModTime() {
+		t.Logf("Expected mtime to be equal, got %v (src) and %v (dst)", fstSrc.ModTime(), fstDst.ModTime())
+		t.Fail()
+	}
 
 	if runtime.GOOS != "windows" {
 		err = cp.CopyPerm(file, dst)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		fstDst2, _ := os.Stat(dst)
-		// log.Println(fstDst2.Mode())
 
 		if fstSrc.Mode() != fstDst2.Mode() {
 			t.Logf("Expected permission %o, got %o", fstSrc.Mode(), fstDst2.Mode())
