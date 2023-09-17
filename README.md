@@ -1,6 +1,6 @@
 # gosyncit
 
-let's go sync it.
+The aim of this project is to explore file handling in go, alongside a cobra/viper-based CLI. Anyways, let's go sync it.
 
 #### copy A &#8594; B
 
@@ -16,6 +16,6 @@ Ensure source and destination have the same content, keep only the newest versio
 
 ## TODO
 
-- add integration tests ? sync at least ...
 - usage documentation
 - extend commands: SFTP
+- make use of viper cfg or remove it
