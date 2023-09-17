@@ -80,19 +80,20 @@ func init() {
 
 func Sync(src, dst string, dry bool) error {
 	fmt.Println("~~~ SYNC ~~~")
+	fmt.Printf("'%s' <--> '%s'\n", src, dst)
 
 	var nItems, nBytes uint
 	t0 := time.Now()
 
 	src, dst, err := pathlib.CheckSrcDst(src, dst)
 	if err != nil {
-		fmt.Println("path check: error")
+		fmt.Println("path check error:", err)
 		return err
 	}
 
 	filesetSrc, err := fileset.New(src)
 	if err != nil {
-		fmt.Println("file set creation: error")
+		fmt.Println("file set creation error:", err)
 		return err
 	}
 

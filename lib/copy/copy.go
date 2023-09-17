@@ -31,7 +31,7 @@ func CopyFile(src, dst string, sourceFileStat fs.FileInfo, dry bool) error {
 		return nil
 	}
 	if !sourceFileStat.Mode().IsRegular() {
-		return fmt.Errorf("%s is not a regular file", src)
+		return fmt.Errorf("'%s' is not a regular file", src)
 	}
 
 	source, err := os.Open(src)
@@ -87,8 +87,7 @@ func ByteCount(b uint) string {
 		div *= unit
 		exp++
 	}
-	return fmt.Sprintf("%.1f %cB",
-		float64(b)/float64(div), "kMGTPE"[exp])
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
 }
 
 func DeleteFileOrDir(dst string, dstInfo fs.FileInfo, dry bool) error {
