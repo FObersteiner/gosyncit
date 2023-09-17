@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-09-17 (v0.0.5)
+
+- add sync integration test
+
 ## 2023-09-13 (v0.0.4)
 
 - add sync

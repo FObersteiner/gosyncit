@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	version  = "0.0.4"
+	version  = "0.0.5" // see CHANGELOG.md
 	cfgFile  string
 	dryRun   bool
 	cleanDst bool
