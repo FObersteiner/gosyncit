@@ -51,6 +51,16 @@ func TestSync(t *testing.T) {
 	if err := os.Chtimes(file1, mtime, mtime); err != nil {
 		t.Fatal(err)
 	}
+	// file2 is equally old in both src and dst. content of src should take over.
+	file2 := filepath.Join(src, "file2")
+	// file2 --> write one more byte so simple comparison (n bytes) says 'different'
+	if err := os.WriteFile(file2, []byte("content_src_"), 0655); err != nil {
+		t.Fatal(err)
+	}
+	mtime = time.Date(2006, time.March, 1, 3, 4, 5, 0, time.UTC)
+	if err := os.Chtimes(file2, mtime, mtime); err != nil {
+		t.Fatal(err)
+	}
 	// file_src_only does not exist in dst
 	file_src_only := filepath.Join(src, "file_src_only")
 	if err := os.WriteFile(file_src_only, []byte("content_src"), 0655); err != nil {
@@ -89,6 +99,15 @@ func TestSync(t *testing.T) {
 	if err := os.Chtimes(file1, mtime, mtime); err != nil {
 		t.Fatal(err)
 	}
+	// file2 is equally old in both src and dst. content of src should take over.
+	file2 = filepath.Join(dst, "file2")
+	if err := os.WriteFile(file2, []byte("content_dst"), 0655); err != nil {
+		t.Fatal(err)
+	}
+	mtime = time.Date(2006, time.March, 1, 3, 4, 5, 0, time.UTC)
+	if err := os.Chtimes(file2, mtime, mtime); err != nil {
+		t.Fatal(err)
+	}
 
 	// --- sync call ---
 	// log.Println(src, dst)
@@ -120,6 +139,12 @@ func TestSync(t *testing.T) {
 	file1_src_content, _ := os.ReadFile(filepath.Join(fs_src.Basepath, "file1"))
 	if !bytes.Equal(file1_src_content, []byte("content_dst")) {
 		t.Log("file1 is younger in dst, so src must contain content of dst")
+		t.Fail()
+	}
+	// file2_src_content, _ := os.ReadFile(filepath.Join(fs_src.Basepath, "file2"))
+	file2_content_dst, _ := os.ReadFile(filepath.Join(fs_dst.Basepath, "file2"))
+	if !bytes.Equal(file2_content_dst, []byte("content_src_")) {
+		t.Log("content of src must be used if file names and mtime are equal")
 		t.Fail()
 	}
 }
