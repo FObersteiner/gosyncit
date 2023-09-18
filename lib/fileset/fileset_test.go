@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	fm "gosyncit/lib/fileset"
+	fm "github.com/FObersteiner/gosyncit/lib/fileset"
 )
 
 func TestNewFileset(t *testing.T) {

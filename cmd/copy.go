@@ -33,8 +33,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gosyncit/lib/copy"
-	"gosyncit/lib/pathlib"
+	"github.com/FObersteiner/gosyncit/lib/copy"
+	"github.com/FObersteiner/gosyncit/lib/pathlib"
 )
 
 var copyCmd = &cobra.Command{
@@ -70,7 +70,7 @@ func init() {
 
 	copyCmd.Flags().SortFlags = false
 
-	copyCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
+	copyCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", false, "show what will be done") // same as rsync
 	err := viper.BindPFlag("dryrun", copyCmd.Flags().Lookup("dryrun"))
 	if err != nil {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
@@ -82,6 +82,8 @@ func init() {
 		log.Fatal("error binding viper to 'clean' flag:", err)
 	}
 }
+
+// ------------------------------------------------------------------------------------
 
 // SimpleCopy makes a copy of directory 'src' to directory 'dst'.
 func SimpleCopy(src, dst string, dry, clean bool) error {

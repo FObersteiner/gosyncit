@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package main
 
-import "gosyncit/cmd"
+import "github.com/FObersteiner/gosyncit/cmd"
 
 func main() {
 	cmd.Execute()

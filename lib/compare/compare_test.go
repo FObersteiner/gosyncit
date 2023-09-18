@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"gosyncit/lib/compare"
+	"github.com/FObersteiner/gosyncit/lib/compare"
 )
 
 func TestBasic(t *testing.T) {

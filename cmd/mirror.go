@@ -34,10 +34,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gosyncit/lib/compare"
-	"gosyncit/lib/copy"
-	"gosyncit/lib/fileset"
-	"gosyncit/lib/pathlib"
+	"github.com/FObersteiner/gosyncit/lib/compare"
+	"github.com/FObersteiner/gosyncit/lib/copy"
+	"github.com/FObersteiner/gosyncit/lib/fileset"
+	"github.com/FObersteiner/gosyncit/lib/pathlib"
 )
 
 var mirrorCmd = &cobra.Command{
@@ -73,7 +73,7 @@ func init() {
 
 	mirrorCmd.Flags().SortFlags = false
 
-	mirrorCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
+	mirrorCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", false, "show what will be done")
 	err := viper.BindPFlag("dryrun", mirrorCmd.Flags().Lookup("dryrun"))
 	if err != nil {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
@@ -86,6 +86,9 @@ func init() {
 	}
 }
 
+// ------------------------------------------------------------------------------------
+
+// Mirror mirrors directory 'src' to directory 'dst'.
 func Mirror(src, dst string, dry, clean bool) error {
 	fmt.Println("~~~ MIRROR ~~~")
 

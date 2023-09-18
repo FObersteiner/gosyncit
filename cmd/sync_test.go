@@ -7,12 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"gosyncit/cmd"
-	"gosyncit/lib/fileset"
+	"github.com/FObersteiner/gosyncit/cmd"
+	"github.com/FObersteiner/gosyncit/lib/fileset"
 )
 
 func TestSync(t *testing.T) {
-	err := cmd.Sync("A", "B", true)
+	dry := false
+	ignorehidden := false
+
+	err := cmd.Sync("A", "B", dry, ignorehidden)
 	if err == nil {
 		t.Fail()
 		t.Log("sync must fail with invalid src/dst input")
@@ -111,7 +114,7 @@ func TestSync(t *testing.T) {
 
 	// --- sync call ---
 	// log.Println(src, dst)
-	if err := cmd.Sync(src, dst, false); err != nil {
+	if err := cmd.Sync(src, dst, dry, ignorehidden); err != nil {
 		t.Fatal(err)
 	}
 
@@ -146,5 +149,61 @@ func TestSync(t *testing.T) {
 	if !bytes.Equal(file2_content_dst, []byte("content_src_")) {
 		t.Log("content of src must be used if file names and mtime are equal")
 		t.Fail()
+	}
+}
+
+func TestSkipHidden(t *testing.T) {
+	src, err := os.MkdirTemp("", "src")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(src)
+
+	dst, err := os.MkdirTemp("", "dst")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dst)
+
+	// hidden file in root
+	fname := filepath.Join(src, ".hidden.file")
+	if err := os.WriteFile(fname, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// hidden file in subdirectory
+	fname = filepath.Join(src, "subdir", ".hidden.file")
+	_ = os.MkdirAll(filepath.Dir(fname), 0755)
+	if err := os.WriteFile(fname, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// hidden directory
+	fname = filepath.Join(src, ".hidden", "a.file")
+	_ = os.MkdirAll(filepath.Dir(fname), 0755)
+	if err := os.WriteFile(fname, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Round 1: ignore
+	dry, skipHidden := false, true
+	if err := cmd.Sync(src, dst, dry, skipHidden); err != nil {
+		t.Logf("sync (ignore hidden: %v) failed with %v", skipHidden, err)
+		t.Fail()
+	}
+	fs_dst, _ := fileset.New(dst)
+	_ = fs_dst.Populate()
+	if len(fs_dst.Paths) > 0 {
+		t.Logf("ignore hidden: want zero entries in dst, have %v", len(fs_dst.Paths))
+	}
+
+	// Round 2: do not ignore
+	dry, skipHidden = false, false
+	if err := cmd.Sync(src, dst, dry, skipHidden); err != nil {
+		t.Logf("sync (ignore hidden: %v) failed with %v", skipHidden, err)
+		t.Fail()
+	}
+	fs_dst, _ = fileset.New(dst)
+	_ = fs_dst.Populate()
+	if len(fs_dst.Paths) != 5 {
+		t.Logf("copy hidden: want five entries in dst, have %v", len(fs_dst.Paths))
 	}
 }

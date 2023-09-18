@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"gosyncit/lib/pathlib"
+	"github.com/FObersteiner/gosyncit/lib/pathlib"
 )
 
 func TestCheckPath(t *testing.T) {

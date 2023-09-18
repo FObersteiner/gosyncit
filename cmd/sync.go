@@ -34,10 +34,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gosyncit/lib/compare"
-	"gosyncit/lib/copy"
-	"gosyncit/lib/fileset"
-	"gosyncit/lib/pathlib"
+	"github.com/FObersteiner/gosyncit/lib/compare"
+	"github.com/FObersteiner/gosyncit/lib/copy"
+	"github.com/FObersteiner/gosyncit/lib/fileset"
+	"github.com/FObersteiner/gosyncit/lib/pathlib"
 )
 
 var syncCmd = &cobra.Command{
@@ -61,8 +61,9 @@ Files will be copied if one is newer or doesn't exit in the destination.`,
 		}
 
 		dry := viper.GetBool("dryrun")
+		ignorehidden := viper.GetBool("skiphidden")
 
-		return Sync(src, dst, dry)
+		return Sync(src, dst, dry, ignorehidden)
 	},
 }
 
@@ -71,16 +72,25 @@ func init() {
 
 	syncCmd.Flags().SortFlags = false
 
-	syncCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
+	syncCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", false, "show what will be done")
 	err := viper.BindPFlag("dryrun", syncCmd.Flags().Lookup("dryrun"))
 	if err != nil {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
 	}
+
+	syncCmd.Flags().BoolVarP(&skipHidden, "skiphidden", "s", false, "skip hidden files")
+	err = viper.BindPFlag("skiphidden", syncCmd.Flags().Lookup("skiphidden"))
+	if err != nil {
+		log.Fatal("error binding viper to 'skiphidden' flag:", err)
+	}
 }
 
-func Sync(src, dst string, dry bool) error {
+// ------------------------------------------------------------------------------------
+
+// Sync synchronizes directory 'src' with directory 'dst'.
+func Sync(src, dst string, dry bool, skipHidden bool) error {
 	fmt.Println("~~~ SYNC ~~~")
-	fmt.Printf("'%s' <--> '%s'\n", src, dst)
+	fmt.Printf("'%s' <--> '%s'\n\n", src, dst)
 
 	var nItems, nBytes uint
 	t0 := time.Now()
@@ -93,7 +103,7 @@ func Sync(src, dst string, dry bool) error {
 
 	filesetSrc, err := fileset.New(src)
 	if err != nil {
-		fmt.Println("file set creation error:", err)
+		fmt.Println("src file set creation error:", err)
 		return err
 	}
 
@@ -112,7 +122,10 @@ func Sync(src, dst string, dry bool) error {
 		fmt.Println("dst fileset population got error", err)
 		if !dry {
 			fmt.Println("dst might not exist, try to create.")
-			_ = os.MkdirAll(dst, copy.DefaultModeDir)
+			err := os.MkdirAll(dst, copy.DefaultModeDir)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -122,7 +135,7 @@ func Sync(src, dst string, dry bool) error {
 
 	basepath := strings.TrimSuffix(filesetSrc.Basepath, string(os.PathSeparator))
 
-	// step 1: copy everything from source to dst if src newer
+	// STEP 1 : copy everything from source to dst if src newer
 	err = filepath.Walk(src,
 		func(srcPath string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
@@ -132,6 +145,11 @@ func Sync(src, dst string, dry bool) error {
 			childPath := strings.TrimPrefix(srcPath, filesetSrc.Basepath)
 			if childPath == basepath {
 				return nil // skip basepath
+			}
+
+			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
+				fmt.Printf("skip hidden '%s'\n", srcPath)
+				return nil
 			}
 
 			nItems++
@@ -172,6 +190,7 @@ func Sync(src, dst string, dry bool) error {
 			dstInfo, _ := os.Stat(filepath.Join(filesetDst.Basepath, childPath))
 			if compare.BasicUnequal(srcInfo, dstInfo) {
 				fmt.Printf("overwrite file (src -> dst) '%s'\n", srcPath)
+				// fmt.Println(srcInfo.Size(), srcInfo.ModTime(), dstInfo.Size(), dstInfo.ModTime())
 				newInDst[childPath] = struct{}{}
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			} else {
@@ -186,7 +205,7 @@ func Sync(src, dst string, dry bool) error {
 		return err
 	}
 
-	// step 2: copy everything from dst to src if dst newer
+	// STEP 2 : copy everything from dst to src if dst newer
 	err = filepath.Walk(dst,
 		func(srcPath string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
@@ -196,6 +215,11 @@ func Sync(src, dst string, dry bool) error {
 			childPath := strings.TrimPrefix(srcPath, filesetDst.Basepath)
 			if childPath == basepath {
 				return nil // skip basepath
+			}
+
+			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
+				fmt.Printf("skip hidden '%s'\n", srcPath)
+				return nil
 			}
 
 			nItems++
@@ -252,7 +276,7 @@ func Sync(src, dst string, dry bool) error {
 
 	dt := time.Since(t0)
 	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("~~~ SYNC done ~~~\n%v items, %v, in %v (~%v per second)\n~~~\n",
+	fmt.Printf("\n~~~ SYNC done ~~~\n%v items, %v, in %v (~%v per second)\n~~~\n",
 		nItems,
 		copy.ByteCount(nBytes),
 		dt,

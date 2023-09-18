@@ -60,7 +60,8 @@ func CopyFile(src, dst string, sourceFileStat fs.FileInfo, dry bool) error {
 		}
 	}
 
-	if err := os.Chtimes(dst, sourceFileStat.ModTime(), sourceFileStat.ModTime()); err != nil {
+	mtime := sourceFileStat.ModTime() //.Add(time.Microsecond)
+	if err := os.Chtimes(dst, mtime, mtime); err != nil {
 		return nil
 	}
 
