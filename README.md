@@ -14,6 +14,10 @@ Like copy, but only write files if source is newer or file size doesn't match, a
 
 Ensure source and destination have the same content, keep only the newest version of any file.
 
+## usage
+
+<<< TODO >>>
+
 ## Notes
 
 Directory tree traversal is always recursive. There is no option to just copy/mirror/sync the top-level directory.
@@ -22,23 +26,19 @@ Directory tree traversal is always recursive. There is no option to just copy/mi
 
 - Test for equality is currently (v0.0.5) only done by comparing modification timestamp (mtime) and size (in bytes). Theoretically, if two files have the same name, mtime and size, they will be considered 'identical' although their _content_ could be different. To prevent this incorrect result, a byte-wise comparison ('deep-equal') would be needed if the basic comparison says 'equal'
 - timestamp comparison granularity is _microseconds_ at the moment (see `lib/compare/compare.go`, `BasicUnequal`). Nanosecond granularity was causing issues if a file was copied to a remote server.
-- `sync`, `mirror`: if two files with the same name and path also have the same mtime in source and destination, then the content of the source will take prevalence (i.e. copied to destination)
+- `sync`, `mirror`: if two files with the same name and path also have the same mtime in source and destination, then the content of the source will take prevalence (i.e. will copied to destination)
 
 ### not implemented
 
 - follow symlinks
 - inclusion / exclusion lists (regex)
 
-## usage
-
-TODO
-
 ---
 
 ## TODO
 
-- add option to skip hidden files
+- add option to skip hidden files (basically done for 'sync' in v0.0.6)
 - add 'quiet' option a la rsync
 - extend commands: SFTP
-- make use of viper cfg or remove it
+- test value of viper cfg in practice
 - sync, mirror: 'deep-equal' comparison option?
