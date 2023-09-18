@@ -151,3 +151,59 @@ func TestSync(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestSkipHidden(t *testing.T) {
+	src, err := os.MkdirTemp("", "src")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(src)
+
+	dst, err := os.MkdirTemp("", "dst")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dst)
+
+	// hidden file in root
+	fname := filepath.Join(src, ".hidden.file")
+	if err := os.WriteFile(fname, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// hidden file in subdirectory
+	fname = filepath.Join(src, "subdir", ".hidden.file")
+	_ = os.MkdirAll(filepath.Dir(fname), 0755)
+	if err := os.WriteFile(fname, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// hidden directory
+	fname = filepath.Join(src, ".hidden", "a.file")
+	_ = os.MkdirAll(filepath.Dir(fname), 0755)
+	if err := os.WriteFile(fname, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Round 1: ignore
+	dry, skipHidden := false, true
+	if err := cmd.Sync(src, dst, dry, skipHidden); err != nil {
+		t.Logf("sync (ignore hidden: %v) failed with %v", skipHidden, err)
+		t.Fail()
+	}
+	fs_dst, _ := fileset.New(dst)
+	_ = fs_dst.Populate()
+	if len(fs_dst.Paths) > 0 {
+		t.Logf("ignore hidden: want zero entries in dst, have %v", len(fs_dst.Paths))
+	}
+
+	// Round 2: do not ignore
+	dry, skipHidden = false, false
+	if err := cmd.Sync(src, dst, dry, skipHidden); err != nil {
+		t.Logf("sync (ignore hidden: %v) failed with %v", skipHidden, err)
+		t.Fail()
+	}
+	fs_dst, _ = fileset.New(dst)
+	_ = fs_dst.Populate()
+	if len(fs_dst.Paths) != 5 {
+		t.Logf("copy hidden: want five entries in dst, have %v", len(fs_dst.Paths))
+	}
+}

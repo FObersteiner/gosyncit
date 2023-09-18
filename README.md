@@ -16,7 +16,7 @@ Ensure source and destination have the same content, keep only the newest versio
 
 ## installation
 
-This assumes the [go toolchain](https://go.dev) to be installed.
+This assumes the [go toolchain](https://go.dev) to be installed:
 
 ```sh
 go install github.com/FObersteiner/gosyncit@latest
@@ -45,7 +45,7 @@ Directory tree traversal is always recursive. There is no option to just copy/mi
 
 ## TODO
 
-- add option to skip hidden files (basically done for 'sync' in v0.0.6)
+- add option to skip hidden files for mirror command (done for 'sync' in v0.0.6)
 - add 'quiet' option a la rsync
 - extend commands: SFTP
 - test value of viper cfg in practice
