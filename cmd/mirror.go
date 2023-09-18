@@ -73,7 +73,7 @@ func init() {
 
 	mirrorCmd.Flags().SortFlags = false
 
-	mirrorCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
+	mirrorCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", false, "show what will be done")
 	err := viper.BindPFlag("dryrun", mirrorCmd.Flags().Lookup("dryrun"))
 	if err != nil {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
