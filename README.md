@@ -15,9 +15,12 @@ Like copy, but only write files if source is newer or file size doesn't match, a
 Ensure source and destination have the same content, keep only the newest version of any file.
 
 ## installation
+
 This assumes the [go toolchain](https://go.dev) to be installed.
 
-<<< TODO >>>
+```sh
+go install github.com/FObersteiner/gosyncit@latest
+```
 
 ## usage
 
