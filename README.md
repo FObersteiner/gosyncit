@@ -34,6 +34,8 @@ TODO
 
 ## TODO
 
+- make 'dry-run' default `false`
+- add 'quiet' option a la rsync
 - extend commands: SFTP
 - make use of viper cfg or remove it
 - sync, mirror: 'deep-equal' comparison option?
