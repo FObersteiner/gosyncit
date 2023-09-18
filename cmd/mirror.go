@@ -86,6 +86,9 @@ func init() {
 	}
 }
 
+// ------------------------------------------------------------------------------------
+
+// Mirror mirrors directory 'src' to directory 'dst'.
 func Mirror(src, dst string, dry, clean bool) error {
 	fmt.Println("~~~ MIRROR ~~~")
 

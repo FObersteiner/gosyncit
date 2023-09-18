@@ -12,7 +12,10 @@ import (
 )
 
 func TestSync(t *testing.T) {
-	err := cmd.Sync("A", "B", true)
+	dry := false
+	ignorehidden := false
+
+	err := cmd.Sync("A", "B", dry, ignorehidden)
 	if err == nil {
 		t.Fail()
 		t.Log("sync must fail with invalid src/dst input")
@@ -111,7 +114,7 @@ func TestSync(t *testing.T) {
 
 	// --- sync call ---
 	// log.Println(src, dst)
-	if err := cmd.Sync(src, dst, false); err != nil {
+	if err := cmd.Sync(src, dst, dry, ignorehidden); err != nil {
 		t.Fatal(err)
 	}
 

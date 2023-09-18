@@ -61,8 +61,9 @@ Files will be copied if one is newer or doesn't exit in the destination.`,
 		}
 
 		dry := viper.GetBool("dryrun")
+		ignorehidden := viper.GetBool("skiphidden")
 
-		return Sync(src, dst, dry)
+		return Sync(src, dst, dry, ignorehidden)
 	},
 }
 
@@ -76,13 +77,20 @@ func init() {
 	if err != nil {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
 	}
+
+	syncCmd.Flags().BoolVarP(&skipHidden, "skiphidden", "s", false, "skip hidden files")
+	err = viper.BindPFlag("skiphidden", syncCmd.Flags().Lookup("skiphidden"))
+	if err != nil {
+		log.Fatal("error binding viper to 'skiphidden' flag:", err)
+	}
 }
 
-func Sync(src, dst string, dry bool) error {
-	skipHidden := true
+// ------------------------------------------------------------------------------------
 
+// Sync synchronizes directory 'src' with directory 'dst'.
+func Sync(src, dst string, dry bool, skipHidden bool) error {
 	fmt.Println("~~~ SYNC ~~~")
-	fmt.Printf("'%s' <--> '%s'\n", src, dst)
+	fmt.Printf("'%s' <--> '%s'\n\n", src, dst)
 
 	var nItems, nBytes uint
 	t0 := time.Now()
@@ -267,7 +275,7 @@ func Sync(src, dst string, dry bool) error {
 
 	dt := time.Since(t0)
 	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("~~~ SYNC done ~~~\n%v items, %v, in %v (~%v per second)\n~~~\n",
+	fmt.Printf("\n~~~ SYNC done ~~~\n%v items, %v, in %v (~%v per second)\n~~~\n",
 		nItems,
 		copy.ByteCount(nBytes),
 		dt,

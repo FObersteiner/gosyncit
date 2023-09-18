@@ -83,6 +83,8 @@ func init() {
 	}
 }
 
+// ------------------------------------------------------------------------------------
+
 // SimpleCopy makes a copy of directory 'src' to directory 'dst'.
 func SimpleCopy(src, dst string, dry, clean bool) error {
 	fmt.Println("~~~ COPY ~~~")
