@@ -14,6 +14,10 @@ Like copy, but only write files if source is newer or file size doesn't match, a
 
 Ensure source and destination have the same content, keep only the newest version of any file.
 
+## installation
+
+<<< TODO >>>
+
 ## usage
 
 <<< TODO >>>
