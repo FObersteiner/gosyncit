@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2023-09-18 (v0.0.6)
+
+- add sync flag 'skiphidden' to ignore hidden files
+- file timestamp comparison granularity to microseconds
+
 ## 2023-09-17 (v0.0.5)
 
 - add sync integration test
