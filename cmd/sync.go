@@ -135,7 +135,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 
 	basepath := strings.TrimSuffix(filesetSrc.Basepath, string(os.PathSeparator))
 
-	// step 1: copy everything from source to dst if src newer
+	// STEP 1 : copy everything from source to dst if src newer
 	err = filepath.Walk(src,
 		func(srcPath string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
@@ -147,7 +147,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 				return nil // skip basepath
 			}
 
-			if skipHidden && strings.Contains(srcPath, "/.") {
+			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
 				fmt.Printf("skip hidden '%s'\n", srcPath)
 				return nil
 			}
@@ -190,6 +190,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 			dstInfo, _ := os.Stat(filepath.Join(filesetDst.Basepath, childPath))
 			if compare.BasicUnequal(srcInfo, dstInfo) {
 				fmt.Printf("overwrite file (src -> dst) '%s'\n", srcPath)
+				// fmt.Println(srcInfo.Size(), srcInfo.ModTime(), dstInfo.Size(), dstInfo.ModTime())
 				newInDst[childPath] = struct{}{}
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			} else {
@@ -204,7 +205,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 		return err
 	}
 
-	// step 2: copy everything from dst to src if dst newer
+	// STEP 2 : copy everything from dst to src if dst newer
 	err = filepath.Walk(dst,
 		func(srcPath string, srcInfo os.FileInfo, err error) error {
 			if err != nil {
@@ -216,7 +217,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 				return nil // skip basepath
 			}
 
-			if skipHidden && strings.Contains(srcPath, "/.") {
+			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
 				fmt.Printf("skip hidden '%s'\n", srcPath)
 				return nil
 			}
