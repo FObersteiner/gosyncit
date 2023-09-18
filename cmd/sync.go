@@ -71,7 +71,7 @@ func init() {
 
 	syncCmd.Flags().SortFlags = false
 
-	syncCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", true, "show what will be done") // same as rsync
+	syncCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", false, "show what will be done")
 	err := viper.BindPFlag("dryrun", syncCmd.Flags().Lookup("dryrun"))
 	if err != nil {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
@@ -79,6 +79,8 @@ func init() {
 }
 
 func Sync(src, dst string, dry bool) error {
+	skipHidden := true
+
 	fmt.Println("~~~ SYNC ~~~")
 	fmt.Printf("'%s' <--> '%s'\n", src, dst)
 
@@ -93,7 +95,7 @@ func Sync(src, dst string, dry bool) error {
 
 	filesetSrc, err := fileset.New(src)
 	if err != nil {
-		fmt.Println("file set creation error:", err)
+		fmt.Println("src file set creation error:", err)
 		return err
 	}
 
@@ -112,7 +114,10 @@ func Sync(src, dst string, dry bool) error {
 		fmt.Println("dst fileset population got error", err)
 		if !dry {
 			fmt.Println("dst might not exist, try to create.")
-			_ = os.MkdirAll(dst, copy.DefaultModeDir)
+			err := os.MkdirAll(dst, copy.DefaultModeDir)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -132,6 +137,11 @@ func Sync(src, dst string, dry bool) error {
 			childPath := strings.TrimPrefix(srcPath, filesetSrc.Basepath)
 			if childPath == basepath {
 				return nil // skip basepath
+			}
+
+			if skipHidden && strings.Contains(srcPath, "/.") {
+				fmt.Printf("skip hidden '%s'\n", srcPath)
+				return nil
 			}
 
 			nItems++
@@ -196,6 +206,11 @@ func Sync(src, dst string, dry bool) error {
 			childPath := strings.TrimPrefix(srcPath, filesetDst.Basepath)
 			if childPath == basepath {
 				return nil // skip basepath
+			}
+
+			if skipHidden && strings.Contains(srcPath, "/.") {
+				fmt.Printf("skip hidden '%s'\n", srcPath)
+				return nil
 			}
 
 			nItems++
