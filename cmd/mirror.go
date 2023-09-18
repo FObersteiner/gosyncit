@@ -34,10 +34,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gosyncit/lib/compare"
-	"gosyncit/lib/copy"
-	"gosyncit/lib/fileset"
-	"gosyncit/lib/pathlib"
+	"github.com/FObersteiner/gosyncit/lib/compare"
+	"github.com/FObersteiner/gosyncit/lib/copy"
+	"github.com/FObersteiner/gosyncit/lib/fileset"
+	"github.com/FObersteiner/gosyncit/lib/pathlib"
 )
 
 var mirrorCmd = &cobra.Command{

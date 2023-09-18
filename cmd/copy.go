@@ -33,8 +33,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gosyncit/lib/copy"
-	"gosyncit/lib/pathlib"
+	"github.com/FObersteiner/gosyncit/lib/copy"
+	"github.com/FObersteiner/gosyncit/lib/pathlib"
 )
 
 var copyCmd = &cobra.Command{

@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"testing"
 
-	cp "gosyncit/lib/copy"
+	cp "github.com/FObersteiner/gosyncit/lib/copy"
 )
 
 func TestCopyFile(t *testing.T) {

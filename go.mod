@@ -1,4 +1,4 @@
-module gosyncit
+module github.com/FObersteiner/gosyncit
 
 go 1.21
 

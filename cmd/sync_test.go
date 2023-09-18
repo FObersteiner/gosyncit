@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gosyncit/cmd"
-	"gosyncit/lib/fileset"
+	"github.com/FObersteiner/gosyncit/cmd"
+	"github.com/FObersteiner/gosyncit/lib/fileset"
 )
 
 func TestSync(t *testing.T) {
