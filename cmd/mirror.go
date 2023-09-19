@@ -97,7 +97,6 @@ func init() {
 
 // Mirror mirrors directory 'src' to directory 'dst'.
 func Mirror(src, dst string, dry, clean, skipHidden bool) error {
-
 	fmt.Println("~~~ MIRROR ~~~")
 	fmt.Printf("'%s' <--> '%s'\n\n", src, dst)
 
@@ -233,7 +232,7 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 
 	dt := time.Since(t0)
 	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("~~~ mirror done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
+	fmt.Printf("~~~ MIRROR done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
 		nItems,
 		copy.ByteCount(nBytes),
 		dt,
