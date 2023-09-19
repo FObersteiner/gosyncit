@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-09-18 (v0.0.7)
+
+- add mirror flag 'skiphidden' to ignore hidden files
+
 ## 2023-09-18 (v0.0.6)
 
 - add sync flag 'skiphidden' to ignore hidden files
