@@ -63,8 +63,9 @@ By default, anything that exists in the destination but not in the source will b
 
 		dry := viper.GetBool("dryrun")
 		clean := viper.GetBool("clean")
+		ignorehidden := viper.GetBool("skiphidden")
 
-		return Mirror(src, dst, dry, clean)
+		return Mirror(src, dst, dry, clean, ignorehidden)
 	},
 }
 
@@ -80,30 +81,37 @@ func init() {
 	}
 
 	mirrorCmd.Flags().BoolVarP(&cleanDst, "clean", "x", true, "remove everything from dst that is not found in source")
-	err = viper.BindPFlag("clean", copyCmd.Flags().Lookup("clean"))
+	err = viper.BindPFlag("clean", mirrorCmd.Flags().Lookup("clean"))
 	if err != nil {
 		log.Fatal("error binding viper to 'clean' flag:", err)
+	}
+
+	mirrorCmd.Flags().BoolVarP(&skipHidden, "skiphidden", "s", false, "skip hidden files")
+	err = viper.BindPFlag("skiphidden", mirrorCmd.Flags().Lookup("skiphidden"))
+	if err != nil {
+		log.Fatal("error binding viper to 'skiphidden' flag:", err)
 	}
 }
 
 // ------------------------------------------------------------------------------------
 
 // Mirror mirrors directory 'src' to directory 'dst'.
-func Mirror(src, dst string, dry, clean bool) error {
+func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 	fmt.Println("~~~ MIRROR ~~~")
+	fmt.Printf("'%s' <--> '%s'\n\n", src, dst)
 
 	var nItems, nBytes uint
 	t0 := time.Now()
 
 	src, dst, err := pathlib.CheckSrcDst(src, dst)
 	if err != nil {
-		fmt.Println("path check: error")
+		fmt.Println("path check error:", err)
 		return err
 	}
 
 	filesetSrc, err := fileset.New(src)
 	if err != nil {
-		fmt.Println("file set creation: error")
+		fmt.Println("src file set creation error:", err)
 		return err
 	}
 
@@ -122,12 +130,12 @@ func Mirror(src, dst string, dry, clean bool) error {
 		fmt.Println("dst fileset population got error", err)
 		if !dry {
 			fmt.Println("dst might not exist, try to create.")
-			_ = os.MkdirAll(dst, copy.DefaultModeDir)
+			err := os.MkdirAll(dst, copy.DefaultModeDir)
+			if err != nil {
+				return err
+			}
 		}
 	}
-
-	// fmt.Println("\nfileSet DST:")
-	// fmt.Println(filesetDst)
 
 	basepath := strings.TrimSuffix(filesetSrc.Basepath, string(os.PathSeparator))
 
@@ -141,6 +149,11 @@ func Mirror(src, dst string, dry, clean bool) error {
 			childPath := strings.TrimPrefix(srcPath, filesetSrc.Basepath)
 			if childPath == basepath {
 				return nil // skip basepath
+			}
+
+			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
+				fmt.Printf("skip hidden '%s'\n", srcPath)
+				return nil
 			}
 
 			nItems++
@@ -200,6 +213,12 @@ func Mirror(src, dst string, dry, clean bool) error {
 	if clean {
 		// for file in filesetDst: file exists in filesetSrc ? --> Delete if not.
 		for name, dstInfo := range filesetDst.Paths {
+
+			if skipHidden && (strings.HasPrefix(name, ".") || strings.Contains(name, "/.")) {
+				fmt.Printf("skip hidden '%s'\n", name)
+				return nil
+			}
+
 			if !filesetSrc.Contains(name) {
 				fmt.Printf("file '%v' does not exist in src, delete\n", name)
 				err := copy.DeleteFileOrDir(filepath.Join(filesetDst.Basepath, name), dstInfo, dry)
