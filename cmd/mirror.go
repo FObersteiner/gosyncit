@@ -97,6 +97,7 @@ func init() {
 
 // Mirror mirrors directory 'src' to directory 'dst'.
 func Mirror(src, dst string, dry, clean, skipHidden bool) error {
+
 	fmt.Println("~~~ MIRROR ~~~")
 	fmt.Printf("'%s' <--> '%s'\n\n", src, dst)
 
