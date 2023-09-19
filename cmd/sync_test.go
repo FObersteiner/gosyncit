@@ -191,8 +191,9 @@ func TestSkipHidden(t *testing.T) {
 	}
 	fs_dst, _ := fileset.New(dst)
 	_ = fs_dst.Populate()
-	if len(fs_dst.Paths) > 0 {
-		t.Logf("ignore hidden: want zero entries in dst, have %v", len(fs_dst.Paths))
+	have, want := len(fs_dst.Paths), 0
+	if have != want {
+		t.Logf("ignore hidden: want %v entries in dst, have %v", want, have)
 	}
 
 	// Round 2: do not ignore
@@ -203,7 +204,8 @@ func TestSkipHidden(t *testing.T) {
 	}
 	fs_dst, _ = fileset.New(dst)
 	_ = fs_dst.Populate()
-	if len(fs_dst.Paths) != 5 {
-		t.Logf("copy hidden: want five entries in dst, have %v", len(fs_dst.Paths))
+	have, want = len(fs_dst.Paths), 5
+	if have != want {
+		t.Logf("copy hidden: want %v entries in dst, have %v", want, have)
 	}
 }

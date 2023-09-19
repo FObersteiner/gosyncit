@@ -2,6 +2,18 @@
 
 The aim of this project is to explore file handling in go, alongside a cobra/viper-based CLI. This could also be extended by a platform-independent tool to sync files via SFTP (e.g. no rsync available on the SFTP server). Anyways, let's go sync it.
 
+## installation
+
+This assumes the [go toolchain](https://go.dev) to be installed:
+
+```sh
+go install github.com/FObersteiner/gosyncit@latest
+```
+
+## usage
+
+<<< TODO >>>
+
 #### copy A &#8594; B
 
 Copy everything from source to destination, overwrite existing content. Optionally clean the destination before.
@@ -14,17 +26,7 @@ Like copy, but only write files if source is newer or file size doesn't match, a
 
 Ensure source and destination have the same content, keep only the newest version of any file.
 
-## installation
-
-This assumes the [go toolchain](https://go.dev) to be installed:
-
-```sh
-go install github.com/FObersteiner/gosyncit@latest
-```
-
-## usage
-
-<<< TODO >>>
+---
 
 ## Notes
 
@@ -40,14 +42,4 @@ Directory tree traversal is always recursive. There is no option to just copy/mi
 
 - follow symlinks
 - inclusion / exclusion lists (regex)
-
----
-
-## TODO
-
-- add option to skip hidden files for mirror command (done for 'sync' in v0.0.6)
-- add 'quiet' option a la rsync
-- extend commands: SFTP
-- test value of viper cfg in practice
-- log to file?
-- sync, mirror: 'deep-equal' comparison option?
+- see also the [issues on github](https://github.com/FObersteiner/gosyncit/issues)
