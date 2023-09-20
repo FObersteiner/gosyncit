@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	version    = "0.0.7" // see CHANGELOG.md
+	version    = "0.0.8" // see CHANGELOG.md
 	cfgFile    string    // global option
 	dryRun     bool      // global option
 	cleanDst   bool      // option for copy and mirror
