@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-09-20 (v0.0.8)
+
+- bug fix sync: only compare mtime
+
 ## 2023-09-19 (v0.0.7)
 
 - add flag 'skiphidden' for `mirror` to ignore hidden files

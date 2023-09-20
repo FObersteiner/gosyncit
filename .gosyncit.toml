@@ -1,1 +1,9 @@
-dryrun = true
+# demo config file
+# run e.g. like 'gosyncit sync --config=path/to/configfile.toml'
+
+src = "/src/path"
+dst = "/dst/path"
+
+dryrun = true     # sync, mirror
+clean = false     # mirror 
+skiphidden = true # sync, mirror
