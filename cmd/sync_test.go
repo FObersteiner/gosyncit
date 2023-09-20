@@ -95,7 +95,7 @@ func TestSync(t *testing.T) {
 	}
 	// file1 is younger in dst
 	file1 = filepath.Join(dst, "file1")
-	if err := os.WriteFile(file1, []byte("content_dst"), 0655); err != nil {
+	if err := os.WriteFile(file1, []byte("content_dst_younger"), 0655); err != nil {
 		t.Fatal(err)
 	}
 	mtime = time.Date(2006, time.April, 1, 3, 4, 5, 0, time.UTC)
@@ -140,7 +140,7 @@ func TestSync(t *testing.T) {
 		t.Fail()
 	}
 	file1_src_content, _ := os.ReadFile(filepath.Join(fs_src.Basepath, "file1"))
-	if !bytes.Equal(file1_src_content, []byte("content_dst")) {
+	if !bytes.Equal(file1_src_content, []byte("content_dst_younger")) {
 		t.Log("file1 is younger in dst, so src must contain content of dst")
 		t.Fail()
 	}
