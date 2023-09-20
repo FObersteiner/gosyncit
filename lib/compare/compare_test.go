@@ -36,7 +36,12 @@ func TestBasic(t *testing.T) {
 	// mtime is equal or B is younger. basic comparison therefore must return unequal == false
 	unequal := compare.BasicUnequal(fileInfoB, fileInfoA)
 	if unequal {
-		t.Log("expected basic comparison to return unequal = false, got true")
+		t.Log("expected basic comparison to return false, got true")
+		t.Fail()
+	}
+	unequal = compare.SrcYounger(fileInfoA, fileInfoB)
+	if unequal {
+		t.Log("expected src younger comparison to return false, got true")
 		t.Fail()
 	}
 }

@@ -18,6 +18,14 @@ func BasicUnequal(srcInfo, dstInfo os.FileInfo) bool {
 	return srcMtime.After(dstMtime) || (srcInfo.Size() != dstInfo.Size())
 }
 
+// SrcYounger returns true if source modification time is after that of dst modification time.
+func SrcYounger(srcInfo, dstInfo os.FileInfo) bool {
+	// only compare microsecond granularity:
+	srcMtime := srcInfo.ModTime().Truncate(time.Microsecond)
+	dstMtime := dstInfo.ModTime().Truncate(time.Microsecond)
+	return srcMtime.After(dstMtime)
+}
+
 // DeepEqual returns true if two files are equal on a byte-level.
 // File modification timestamps are ignored.
 func DeepEqual(src, dst string) (bool, error) {

@@ -188,9 +188,8 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 			}
 
 			dstInfo, _ := os.Stat(filepath.Join(filesetDst.Basepath, childPath))
-			if compare.BasicUnequal(srcInfo, dstInfo) {
+			if compare.SrcYounger(srcInfo, dstInfo) {
 				fmt.Printf("overwrite file (src -> dst) '%s'\n", srcPath)
-				// fmt.Println(srcInfo.Size(), srcInfo.ModTime(), dstInfo.Size(), dstInfo.ModTime())
 				newInDst[childPath] = struct{}{}
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			} else {
@@ -259,7 +258,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 			}
 
 			dstInfo, _ := os.Stat(filepath.Join(filesetSrc.Basepath, childPath))
-			if compare.BasicUnequal(srcInfo, dstInfo) {
+			if compare.SrcYounger(srcInfo, dstInfo) {
 				fmt.Printf("overwrite file (dst -> src) '%s'\n", srcPath)
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			} else {

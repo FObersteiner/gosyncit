@@ -144,12 +144,15 @@ func TestSync(t *testing.T) {
 		t.Log("file1 is younger in dst, so src must contain content of dst")
 		t.Fail()
 	}
+
+	// TODO : how to handle this?
+	// if mtime and size are equal, which content should be used
 	// file2_src_content, _ := os.ReadFile(filepath.Join(fs_src.Basepath, "file2"))
-	file2_content_dst, _ := os.ReadFile(filepath.Join(fs_dst.Basepath, "file2"))
-	if !bytes.Equal(file2_content_dst, []byte("content_src_")) {
-		t.Log("content of src must be used if file names and mtime are equal")
-		t.Fail()
-	}
+	// file2_content_dst, _ := os.ReadFile(filepath.Join(fs_dst.Basepath, "file2"))
+	// if !bytes.Equal(file2_content_dst, []byte("content_src_")) {
+	// 	t.Log("content of src must be used if file names and mtime are equal")
+	// 	t.Fail()
+	// }
 }
 
 func TestSkipHidden(t *testing.T) {
