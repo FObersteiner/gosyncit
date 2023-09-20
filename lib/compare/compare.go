@@ -7,22 +7,25 @@ import (
 	"time"
 )
 
-const BUFFERSIZE = 4096
+const (
+	BUFFERSIZE      = 4096
+	TimeGranularity = time.Microsecond
+)
 
 // BasicUnequal returns true if source modification time is after that of dst modification time,
 // or file sizes do not match.
 func BasicUnequal(srcInfo, dstInfo os.FileInfo) bool {
 	// only compare microsecond granularity:
-	srcMtime := srcInfo.ModTime().Truncate(time.Microsecond)
-	dstMtime := dstInfo.ModTime().Truncate(time.Microsecond)
+	srcMtime := srcInfo.ModTime().Truncate(TimeGranularity)
+	dstMtime := dstInfo.ModTime().Truncate(TimeGranularity)
 	return srcMtime.After(dstMtime) || (srcInfo.Size() != dstInfo.Size())
 }
 
 // SrcYounger returns true if source modification time is after that of dst modification time.
 func SrcYounger(srcInfo, dstInfo os.FileInfo) bool {
 	// only compare microsecond granularity:
-	srcMtime := srcInfo.ModTime().Truncate(time.Microsecond)
-	dstMtime := dstInfo.ModTime().Truncate(time.Microsecond)
+	srcMtime := srcInfo.ModTime().Truncate(TimeGranularity)
+	dstMtime := dstInfo.ModTime().Truncate(TimeGranularity)
 	return srcMtime.After(dstMtime)
 }
 
