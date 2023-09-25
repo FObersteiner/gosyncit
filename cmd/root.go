@@ -30,7 +30,8 @@ import (
 )
 
 var (
-	version    = "0.0.8" // see CHANGELOG.md
+	version    = "0.0.9" // see CHANGELOG.md
+	verbose    bool      // global option
 	cfgFile    string    // global option
 	dryRun     bool      // global option
 	cleanDst   bool      // option for copy and mirror
@@ -95,5 +96,17 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func verboseprint(a ...any) {
+	if verbose {
+		fmt.Println(a...)
+	}
+}
+
+func verboseprintf(format string, a ...any) {
+	if verbose {
+		fmt.Printf(format, a...)
 	}
 }

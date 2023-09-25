@@ -62,6 +62,8 @@ Files will be copied if one is newer or doesn't exit in the destination.`,
 
 		dry := viper.GetBool("dryrun")
 		ignorehidden := viper.GetBool("skiphidden")
+		setGlobalVerbose := viper.GetBool("verbose")
+		verbose = setGlobalVerbose
 
 		return Sync(src, dst, dry, ignorehidden)
 	},
@@ -83,6 +85,12 @@ func init() {
 	if err != nil {
 		log.Fatal("error binding viper to 'skiphidden' flag:", err)
 	}
+
+	syncCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output to the command line")
+	err = viper.BindPFlag("verbose", syncCmd.Flags().Lookup("verbose"))
+	if err != nil {
+		log.Fatal("error binding viper to 'verbose' flag:", err)
+	}
 }
 
 // ------------------------------------------------------------------------------------
@@ -97,13 +105,13 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 
 	src, dst, err := pathlib.CheckSrcDst(src, dst)
 	if err != nil {
-		fmt.Println("path check error:", err)
+		verboseprint("path check error:", err)
 		return err
 	}
 
 	filesetSrc, err := fileset.New(src)
 	if err != nil {
-		fmt.Println("src file set creation error:", err)
+		verboseprint("src file set creation error:", err)
 		return err
 	}
 
@@ -119,9 +127,9 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 	// for file in filesetSrc: src file exists in dst ?
 	err = filesetDst.Populate()
 	if err != nil {
-		fmt.Println("dst fileset population got error", err)
+		verboseprint("dst fileset population got error", err)
 		if !dry {
-			fmt.Println("dst might not exist, try to create.")
+			verboseprint("dst might not exist, try to create.")
 			err := os.MkdirAll(dst, copy.DefaultModeDir)
 			if err != nil {
 				return err
@@ -148,7 +156,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 			}
 
 			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
-				fmt.Printf("skip hidden '%s'\n", srcPath)
+				verboseprintf("skip hidden '%s'\n", srcPath)
 				return nil
 			}
 
@@ -165,12 +173,12 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 			//     no  --> create.
 			//     yes --> skip.
 			if srcInfo.IsDir() {
-				fmt.Printf("create or skip dir '%s'\n", dstPath)
+				verboseprintf("create or skip dir '%s'\n", dstPath)
 				return copy.CreateDir(dstPath, dry) // ignores error if dir exists
 			}
 
 			if !srcInfo.Mode().IsRegular() {
-				fmt.Printf("skip non-regular file '%s'\n", srcPath)
+				verboseprintf("skip non-regular file '%s'\n", srcPath)
 				return nil
 			}
 
@@ -193,14 +201,14 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 				newInDst[childPath] = struct{}{}
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			} else {
-				fmt.Printf("skip file '%s'\n", srcPath)
+				verboseprintf("skip file '%s'\n", srcPath)
 			}
 			return nil
 		},
 	)
 
 	if err != nil {
-		fmt.Println("src filepath walk error:", err)
+		verboseprint("src filepath walk error:", err)
 		return err
 	}
 
@@ -217,7 +225,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 			}
 
 			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
-				fmt.Printf("skip hidden '%s'\n", srcPath)
+				verboseprintf("skip hidden '%s'\n", srcPath)
 				return nil
 			}
 
@@ -231,12 +239,12 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 			//     no  --> create.
 			//     yes --> skip.
 			if srcInfo.IsDir() {
-				fmt.Printf("create or skip dir '%s'\n", dstPath)
+				verboseprintf("create or skip dir '%s'\n", dstPath)
 				return copy.CreateDir(dstPath, dry) // ignores error if dir exists
 			}
 
 			if !srcInfo.Mode().IsRegular() {
-				fmt.Printf("skip non-regular file '%s'\n", srcPath)
+				verboseprintf("skip non-regular file '%s'\n", srcPath)
 				return nil
 			}
 
@@ -253,7 +261,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			}
 			if _, ok := newInDst[childPath]; ok {
-				fmt.Printf("skip new file '%s'\n", srcPath)
+				verboseprintf("skip new file '%s'\n", srcPath)
 				return nil
 			}
 
@@ -262,24 +270,22 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 				fmt.Printf("overwrite file (dst -> src) '%s'\n", srcPath)
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			} else {
-				fmt.Printf("skip file '%s'\n", srcPath)
+				verboseprintf("skip file '%s'\n", srcPath)
 			}
 			return nil
 		},
 	)
 
 	if err != nil {
-		fmt.Println("dst filepath walk error:", err)
+		verboseprint("dst filepath walk error:", err)
 		return err
 	}
 
 	dt := time.Since(t0)
-	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("\n~~~ SYNC done ~~~\n%v items, %v, in %v (~%v per second)\n~~~\n",
+	fmt.Printf("\n~~~ SYNC done ~~~\n%v items, %v, in %v\n~~~\n",
 		nItems,
 		copy.ByteCount(nBytes),
 		dt,
-		copy.ByteCount(uint(float64(nBytes)/secs)),
 	)
 	return nil
 }

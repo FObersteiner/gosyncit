@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-09-25 (v0.0.9)
+
+- add verbose (print) option to `sync`
+
 ## 2023-09-20 (v0.0.8)
 
 - bug fix sync: only compare mtime
