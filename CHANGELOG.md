@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2023-09-xx (v0.0.10)
+
+- implement verbose for mirror cmd
+- invert 'clean' flag: 'dirty' now means 'not clean'
+
 ## 2023-09-25 (v0.0.9)
 
 - add verbose (print) option to `sync`

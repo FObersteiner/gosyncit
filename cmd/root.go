@@ -30,12 +30,12 @@ import (
 )
 
 var (
-	version    = "0.0.9" // see CHANGELOG.md
-	verbose    bool      // global option
-	cfgFile    string    // global option
-	dryRun     bool      // global option
-	noCleanDst bool      // option for copy and mirror
-	skipHidden bool      // option for mirror and sync
+	version    = "0.0.10" // see CHANGELOG.md
+	verbose    bool       // global option
+	cfgFile    string     // global option
+	dryRun     bool       // global option
+	noCleanDst bool       // option for copy and mirror
+	skipHidden bool       // option for mirror and sync
 )
 
 // rootCmd represents the base command when called without any subcommands
