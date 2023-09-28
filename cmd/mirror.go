@@ -62,8 +62,10 @@ By default, anything that exists in the destination but not in the source will b
 		}
 
 		dry := viper.GetBool("dryrun")
-		clean := viper.GetBool("clean")
+		clean := !viper.GetBool("dirty")
 		ignorehidden := viper.GetBool("skiphidden")
+		setGlobalVerbose := viper.GetBool("verbose")
+		verbose = setGlobalVerbose
 
 		return Mirror(src, dst, dry, clean, ignorehidden)
 	},
@@ -80,16 +82,22 @@ func init() {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
 	}
 
-	mirrorCmd.Flags().BoolVarP(&cleanDst, "clean", "x", true, "remove everything from dst that is not found in source")
-	err = viper.BindPFlag("clean", mirrorCmd.Flags().Lookup("clean"))
+	mirrorCmd.Flags().BoolVarP(&noCleanDst, "dirty", "x", false, "do not remove anything from dst that is not found in source")
+	err = viper.BindPFlag("dirty", mirrorCmd.Flags().Lookup("dirty"))
 	if err != nil {
-		log.Fatal("error binding viper to 'clean' flag:", err)
+		log.Fatal("error binding viper to 'dirty' flag:", err)
 	}
 
 	mirrorCmd.Flags().BoolVarP(&skipHidden, "skiphidden", "s", false, "skip hidden files")
 	err = viper.BindPFlag("skiphidden", mirrorCmd.Flags().Lookup("skiphidden"))
 	if err != nil {
 		log.Fatal("error binding viper to 'skiphidden' flag:", err)
+	}
+
+	mirrorCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output to the command line")
+	err = viper.BindPFlag("verbose", mirrorCmd.Flags().Lookup("verbose"))
+	if err != nil {
+		log.Fatal("error binding viper to 'verbose' flag:", err)
 	}
 }
 
@@ -98,20 +106,20 @@ func init() {
 // Mirror mirrors directory 'src' to directory 'dst'.
 func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 	fmt.Println("~~~ MIRROR ~~~")
-	fmt.Printf("'%s' <--> '%s'\n\n", src, dst)
+	fmt.Printf("'%s' --> '%s'\n\n", src, dst)
 
 	var nItems, nBytes uint
 	t0 := time.Now()
 
 	src, dst, err := pathlib.CheckSrcDst(src, dst)
 	if err != nil {
-		fmt.Println("path check error:", err)
+		verboseprint("path check error:", err)
 		return err
 	}
 
 	filesetSrc, err := fileset.New(src)
 	if err != nil {
-		fmt.Println("src file set creation error:", err)
+		verboseprint("src file set creation error:", err)
 		return err
 	}
 
@@ -127,9 +135,9 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 	// for file in filesetSrc: src file exists in dst ?
 	err = filesetDst.Populate()
 	if err != nil {
-		fmt.Println("dst fileset population got error", err)
+		verboseprint("dst fileset population got error", err)
 		if !dry {
-			fmt.Println("dst might not exist, try to create.")
+			verboseprint("dst might not exist, try to create.")
 			err := os.MkdirAll(dst, copy.DefaultModeDir)
 			if err != nil {
 				return err
@@ -152,7 +160,7 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 			}
 
 			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
-				fmt.Printf("skip hidden '%s'\n", srcPath)
+				verboseprintf("skip hidden '%s'\n", srcPath)
 				return nil
 			}
 
@@ -169,12 +177,12 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 			//     no  --> create.
 			//     yes --> skip.
 			if srcInfo.IsDir() {
-				fmt.Printf("create or skip dir '%s'\n", dstPath)
+				verboseprintf("create or skip dir '%s'\n", dstPath)
 				return copy.CreateDir(dstPath, dry) // ignores error if dir exists
 			}
 
 			if !srcInfo.Mode().IsRegular() {
-				fmt.Printf("skip non-regular file '%s'\n", srcPath)
+				verboseprintf("skip non-regular file '%s'\n", srcPath)
 				return nil
 			}
 
@@ -196,7 +204,7 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 				fmt.Printf("overwrite file '%s'\n", srcPath)
 				return copy.CopyFile(srcPath, dstPath, srcInfo, dry)
 			} else {
-				fmt.Printf("skip file '%s'\n", srcPath)
+				verboseprintf("skip file '%s'\n", srcPath)
 			}
 			return nil
 		},
@@ -215,7 +223,7 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 		for name, dstInfo := range filesetDst.Paths {
 
 			if skipHidden && (strings.HasPrefix(name, ".") || strings.Contains(name, "/.")) {
-				fmt.Printf("skip hidden '%s'\n", name)
+				verboseprintf("skip hidden '%s'\n", name)
 				return nil
 			}
 
@@ -224,19 +232,17 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 				err := copy.DeleteFileOrDir(filepath.Join(filesetDst.Basepath, name), dstInfo, dry)
 				if err != nil {
 					// this can sometimes give an error if the parent directory was deleted before...
-					fmt.Println("deletion failed,", err)
+					verboseprint("deletion failed,", err)
 				}
 			}
 		}
 	}
 
 	dt := time.Since(t0)
-	secs := float64(dt) / float64(time.Second)
-	fmt.Printf("~~~ MIRROR done ~~~\n%v items (%v) in %v, %v per second\n~~~\n",
+	verboseprintf("~~~ MIRROR done ~~~\n%v items (%v) in %v\n~~~\n",
 		nItems,
 		copy.ByteCount(nBytes),
 		dt,
-		copy.ByteCount(uint(float64(nBytes)/secs)),
 	)
 	return nil
 }
