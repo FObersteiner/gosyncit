@@ -34,7 +34,7 @@ var (
 	verbose    bool      // global option
 	cfgFile    string    // global option
 	dryRun     bool      // global option
-	cleanDst   bool      // option for copy and mirror
+	noCleanDst bool      // option for copy and mirror
 	skipHidden bool      // option for mirror and sync
 )
 

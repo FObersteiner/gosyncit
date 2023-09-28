@@ -59,7 +59,7 @@ var copyCmd = &cobra.Command{
 		}
 
 		dry := viper.GetBool("dryrun")
-		clean := viper.GetBool("clean")
+		clean := !viper.GetBool("dirty")
 
 		return SimpleCopy(src, dst, dry, clean)
 	},
@@ -76,10 +76,10 @@ func init() {
 		log.Fatal("error binding viper to 'dryrun' flag:", err)
 	}
 
-	copyCmd.Flags().BoolVarP(&cleanDst, "clean", "x", false, "remove everything from dst for a clean copy")
-	err = viper.BindPFlag("clean", copyCmd.Flags().Lookup("clean"))
+	copyCmd.Flags().BoolVarP(&noCleanDst, "dirty", "x", false, "do not remove anything from dst before copy")
+	err = viper.BindPFlag("dirty", copyCmd.Flags().Lookup("dirty"))
 	if err != nil {
-		log.Fatal("error binding viper to 'clean' flag:", err)
+		log.Fatal("error binding viper to 'dirty' flag:", err)
 	}
 }
 
