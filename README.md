@@ -12,18 +12,14 @@ go install github.com/FObersteiner/gosyncit@latest
 
 ## usage
 
-<<< TODO >>>
-
-#### copy A &#8594; B
-
-Copy everything from source to destination, overwrite existing content. Optionally clean the destination before.
-
 #### mirror A &#8594; B
 
+<<< TODO >>>
 Like copy, but only write files if source is newer or file size doesn't match, and only keep files that exist in source.
 
 #### sync A &#8596; B
 
+<<< TODO >>>
 Ensure source and destination have the same content, keep only the newest version of any file.
 
 ---
