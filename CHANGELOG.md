@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2023-09-xx (v0.0.11)
+## 2023-09-30 (v0.0.11)
 
 - implement verbose for mirror cmd
 - invert 'clean' flag: 'dirty' now means 'not clean'
