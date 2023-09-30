@@ -14,13 +14,46 @@ go install github.com/FObersteiner/gosyncit@latest
 
 #### mirror A &#8594; B
 
-<<< TODO >>>
-Like copy, but only write files if source is newer or file size doesn't match, and only keep files that exist in source.
+Write files to destination if source is newer or file size doesn't match, only keep files that exist in source (see flags).
+
+```
+Usage:
+  gosyncit mirror [flags]
+
+Aliases:
+  mirror, mi
+
+Flags:
+  -n, --dryrun       show what will be done
+  -x, --dirty        do not remove anything from dst that is not found in source
+  -s, --skiphidden   skip hidden files
+  -v, --verbose      verbose output to the command line
+  -h, --help         help for mirror
+
+Global Flags:
+      --config string   config file (default is $HOME/.gosyncit.toml)
+```
 
 #### sync A &#8596; B
 
-<<< TODO >>>
 Ensure source and destination have the same content, keep only the newest version of any file.
+
+```
+Usage:
+  gosyncit sync [flags]
+
+Aliases:
+  sync, sy
+
+Flags:
+  -n, --dryrun       show what will be done
+  -s, --skiphidden   skip hidden files
+  -v, --verbose      verbose output to the command line
+  -h, --help         help for sync
+
+Global Flags:
+      --config string   config file (default is $HOME/.gosyncit.toml)
+```
 
 ---
 
