@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	version    = "0.0.10" // see CHANGELOG.md
+	version    = "0.0.11" // see CHANGELOG.md
 	verbose    bool       // global option
 	cfgFile    string     // global option
 	dryRun     bool       // global option
