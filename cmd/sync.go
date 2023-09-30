@@ -41,7 +41,7 @@ import (
 )
 
 var syncCmd = &cobra.Command{
-	Use:     "sync",
+	Use:     "sync 'src' 'dst'",
 	Aliases: []string{"sy"},
 	Short:   "synchronize directory 'src' with directory 'dst'",
 	Long: `Synchronize the content of source directory with destination directory.
@@ -50,9 +50,8 @@ Files will be copied if one is newer or doesn't exit in the destination.`,
 	RunE: func(_ *cobra.Command, args []string) error {
 		src := viper.GetString("src")
 		dst := viper.GetString("dst")
-
 		if len(args) < 2 && (src == "" || dst == "") {
-			return errors.New("missing required arguments [src] and [dst]")
+			return errors.New("missing required argument 'src' or 'dst'")
 		}
 
 		if len(args) == 2 {
