@@ -45,7 +45,8 @@ var sftpmirrorCmd = &cobra.Command{
 	Short:   "mirrors directories via SFTP",
 	Long: `the direction can either be local --> remote or remote --> local.
   "local" in this context means local file system, remote means file system of the sftp server.`,
-	Args: cobra.MaximumNArgs(4),
+	SilenceUsage: true,
+	Args:         cobra.MaximumNArgs(4),
 	RunE: func(_ *cobra.Command, args []string) error {
 		local := viper.GetString("local")
 		remote := viper.GetString("remote")

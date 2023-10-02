@@ -46,7 +46,8 @@ var syncCmd = &cobra.Command{
 	Short:   "synchronize directory 'src' with directory 'dst'",
 	Long: `Synchronize the content of source directory with destination directory.
 Files will be copied if one is newer or doesn't exit in the destination.`,
-	Args: cobra.MaximumNArgs(2),
+	SilenceUsage: true,
+	Args:         cobra.MaximumNArgs(2),
 	RunE: func(_ *cobra.Command, args []string) error {
 		src := viper.GetString("src")
 		dst := viper.GetString("dst")

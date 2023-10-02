@@ -47,7 +47,8 @@ var mirrorCmd = &cobra.Command{
 	Long: `Mirror the content of source directory to destination directory.
 Files will only be copied if the source file is newer.
 By default, anything that exists in the destination but not in the source will be deleted.`,
-	Args: cobra.MaximumNArgs(2),
+	SilenceUsage: true,
+	Args:         cobra.MaximumNArgs(2),
 	RunE: func(_ *cobra.Command, args []string) error {
 		src := viper.GetString("src")
 		dst := viper.GetString("dst")
