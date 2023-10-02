@@ -30,12 +30,14 @@ import (
 )
 
 var (
-	version    = "0.0.11" // see CHANGELOG.md
+	version    = "0.0.12" // see CHANGELOG.md
 	verbose    bool       // global option
 	cfgFile    string     // global option
 	dryRun     bool       // global option
 	noCleanDst bool       // option for copy and mirror
 	skipHidden bool       // option for mirror and sync
+	// SFTP-specific
+	port int
 )
 
 // rootCmd represents the base command when called without any subcommands

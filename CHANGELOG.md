@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-10-02 (v0.0.12)
+
+- implement basic sftp functionality
+
 ## 2023-09-30 (v0.0.11)
 
 - implement verbose for mirror cmd
