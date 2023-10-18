@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-10-18 (v0.0.13)
+
+- mirror from local to sftp working
+
 ## 2023-10-02 (v0.0.12)
 
 - implement basic sftp functionality
