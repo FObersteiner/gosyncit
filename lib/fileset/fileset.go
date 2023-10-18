@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/sftp"
 )
 
 var ErrInvalidBasepath = errors.New("basepath must be an existing directory")
@@ -51,6 +53,21 @@ func (fs *Fileset) Populate() error {
 
 	delete(fs.Paths, "") // removes basepath from map
 
+	return nil
+}
+
+// SftpPopulate populates a fileset from an sftp client
+func (fs *Fileset) SftpPopulate(sc *sftp.Client) error {
+	walker := sc.Walk(fs.Basepath)
+	for walker.Step() {
+		if err := walker.Err(); err != nil {
+			return err
+		}
+		p := strings.TrimPrefix(walker.Path(), fs.Basepath)
+		if p != "" {
+			fs.Paths[p] = walker.Stat()
+		}
+	}
 	return nil
 }
 

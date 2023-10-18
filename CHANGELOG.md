@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2023-10-18 (v0.0.13)
+
+- mirror from local to sftp working
+
+## 2023-10-02 (v0.0.12)
+
+- implement basic sftp functionality
+
 ## 2023-09-30 (v0.0.11)
 
 - implement verbose for mirror cmd

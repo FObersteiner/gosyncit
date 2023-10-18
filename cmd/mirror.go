@@ -41,19 +41,19 @@ import (
 )
 
 var mirrorCmd = &cobra.Command{
-	Use:     "mirror",
+	Use:     "mirror 'src' 'dst'",
 	Aliases: []string{"mi"},
 	Short:   "mirror directory 'src' to directory 'dst'",
 	Long: `Mirror the content of source directory to destination directory.
 Files will only be copied if the source file is newer.
 By default, anything that exists in the destination but not in the source will be deleted.`,
-	Args: cobra.MaximumNArgs(2),
+	SilenceUsage: true,
+	Args:         cobra.MaximumNArgs(2),
 	RunE: func(_ *cobra.Command, args []string) error {
 		src := viper.GetString("src")
 		dst := viper.GetString("dst")
-
 		if len(args) < 2 && (src == "" || dst == "") {
-			return errors.New("missing required arguments [src] and [dst]")
+			return errors.New("missing required argument 'src' or 'dst'")
 		}
 
 		if len(args) == 2 {
