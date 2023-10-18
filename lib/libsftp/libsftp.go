@@ -16,6 +16,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
+// Credentials for SSH auth
 type Credentials struct {
 	Usr        string
 	Host       string
@@ -104,7 +105,7 @@ func GetHostKey(host string) (ssh.PublicKey, error) {
 	return hk, err
 }
 
-// ListDirFiles in a certain directory "remoteDir" on the SFTP server
+// ListDirsFiles in a certain directory "remoteDir" on the SFTP server
 func ListDirsFiles(sc *sftp.Client, remoteDir string) (fsinfo []fs.FileInfo, err error) {
 	fsinfo, err = sc.ReadDir(remoteDir)
 	if err != nil {
@@ -114,19 +115,13 @@ func ListDirsFiles(sc *sftp.Client, remoteDir string) (fsinfo []fs.FileInfo, err
 	return fsinfo, err
 }
 
-// UploadFile to SFTP server
+// UploadFile to SFTP server. The directory path on the remote must exist.
 func UploadFile(sc *sftp.Client, localFile, remoteFile string) (n int64, err error) {
 	srcFile, err := os.Open(localFile)
 	if err != nil {
 		return 0, fmt.Errorf("unable to open local file: %v", err)
 	}
 	defer srcFile.Close()
-
-	parent := filepath.Dir(remoteFile)
-	pathSep := string(filepath.Separator)
-	for _, dir := range strings.Split(parent, pathSep) {
-		_ = sc.Mkdir(pathSep + dir) // make all subdirs of the remote path
-	}
 
 	dstFile, err := sc.OpenFile(remoteFile, (os.O_WRONLY | os.O_CREATE | os.O_TRUNC))
 	if err != nil {
@@ -164,7 +159,9 @@ func DownloadFile(sc *sftp.Client, remoteFile, localFile string) (n int64, err e
 	return n, err
 }
 
-// DeleteFile from SFTP server. A wrapper around sftp.Client.Remove and sftp.Client.RemoveDirectory.
+// DeleteFile from SFTP server.
+// A wrapper around sftp.Client.Remove and sftp.Client.RemoveDirectory.
+// If removeDir is true but the directory is not empty, an error will be returned.
 func DeleteFile(sc *sftp.Client, remoteFile string, removeDir bool) (err error) {
 	err = sc.Remove(remoteFile)
 	if err == nil && removeDir {
