@@ -1,6 +1,6 @@
 # gosyncit
 
-The aim of this project is to explore file handling in go, alongside a cobra/viper-based CLI. This could also be extended by a platform-independent tool to sync files via SFTP (e.g. no rsync available on the SFTP server). Anyways, let's go sync it.
+The aim of this project is to explore file handling in go, alongside a cobra/viper-based CLI. Only a very basic file system abstraction is used. Functionality for the local file system is extended by a platform-independent tool to mirror files via SFTP (e.g. no rsync available on the SFTP server). Anyways, let's go sync it.
 
 ## installation
 
