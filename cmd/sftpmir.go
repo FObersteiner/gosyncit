@@ -27,6 +27,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -34,16 +35,18 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/FObersteiner/gosyncit/lib/compare"
+	"github.com/FObersteiner/gosyncit/lib/copy"
 	"github.com/FObersteiner/gosyncit/lib/fileset"
-	libsftp "github.com/FObersteiner/gosyncit/lib/sftp"
+	"github.com/FObersteiner/gosyncit/lib/libsftp"
 )
 
 // sftpmirrorCmd represents the sftpsync command
 var sftpmirrorCmd = &cobra.Command{
-	Use:     "sftpmirror 'local' 'remote' 'remote-url' 'username'",
+	Use:     "sftpmirror 'local-path' 'remote-path' 'remote-url' 'username'",
 	Aliases: []string{"smir"},
 	Short:   "mirrors directories via SFTP",
-	Long: `the direction can either be local --> remote or remote --> local.
+	Long: `the direction can either be "local --> remote" or "remote --> local".
   "local" in this context means local file system, remote means file system of the sftp server.`,
 	SilenceUsage: true,
 	Args:         cobra.MaximumNArgs(4),
@@ -65,9 +68,10 @@ var sftpmirrorCmd = &cobra.Command{
 		}
 
 		p := viper.GetInt("port")
-
+		reverse := viper.GetBool("reverse")
 		dry := viper.GetBool("dryrun")
 		ignorehidden := viper.GetBool("skiphidden")
+		clean := !viper.GetBool("dirty")
 		setGlobalVerbose := viper.GetBool("verbose")
 		verbose = setGlobalVerbose
 
@@ -79,7 +83,7 @@ var sftpmirrorCmd = &cobra.Command{
 			SSHtimeout: time.Second * 10,
 		}
 
-		return SftpMir(local, remote, creds, dry, ignorehidden)
+		return SftpMir(local, remote, creds, reverse, dry, ignorehidden, clean)
 	},
 }
 
@@ -91,6 +95,13 @@ func init() {
 	err := viper.BindPFlag("port", sftpmirrorCmd.Flags().Lookup("port"))
 	if err != nil {
 		log.Fatal("error binding viper to 'port' flag:", err)
+	}
+
+	sftpmirrorCmd.Flags().BoolVarP(&reverseDirection, "reverse", "r", false,
+		"reverse mirror: remote to local instead of local to remote")
+	err = viper.BindPFlag("reverse", sftpmirrorCmd.Flags().Lookup("reverse"))
+	if err != nil {
+		log.Fatal("error binding viper to 'reverse' flag:", err)
 	}
 
 	sftpmirrorCmd.Flags().BoolVarP(&dryRun, "dryrun", "n", false, "show what will be done")
@@ -105,6 +116,12 @@ func init() {
 		log.Fatal("error binding viper to 'skiphidden' flag:", err)
 	}
 
+	sftpmirrorCmd.Flags().BoolVarP(&noCleanDst, "dirty", "x", false, "do not remove anything from dst that is not found in source")
+	err = viper.BindPFlag("dirty", sftpmirrorCmd.Flags().Lookup("dirty"))
+	if err != nil {
+		log.Fatal("error binding viper to 'dirty' flag:", err)
+	}
+
 	sftpmirrorCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output to the command line")
 	err = viper.BindPFlag("verbose", sftpmirrorCmd.Flags().Lookup("verbose"))
 	if err != nil {
@@ -113,10 +130,19 @@ func init() {
 }
 
 // SftpMir mirrors directory 'local' to 'remote' via SFTP
-func SftpMir(local, remote string, creds libsftp.Credentials, dry, ignorehidden bool) error {
+func SftpMir(local, remote string, creds libsftp.Credentials, reverse, dry, ignorehidden, clean bool) error {
+	//
+	// TODO : handle non-existing cases for local, remote
+	// TODO : handle reverse-case: mirror remote to local
+	//
 	fmt.Println("~~~ SFTP MIRROR ~~~")
 	verboseprintf("%s\n", &creds)
 	fmt.Printf("'%s' --> '%s'\n\n", local, remote)
+
+	fmt.Println("reverse:", reverse, "| dry:", dry, "| ignorehidden", ignorehidden)
+
+	var nItems, nBytes uint
+	t0 := time.Now()
 
 	sshcon, err := libsftp.GetSSHconn(creds)
 	if err != nil {
@@ -129,11 +155,7 @@ func SftpMir(local, remote string, creds libsftp.Credentials, dry, ignorehidden 
 		return err
 	}
 	defer sc.Close()
-	verboseprintf("SFTP connection established; %s", &creds)
-
-	// TODO : handle non-existing cases (local, remote)
-
-	// TODO : handle reverse-case: mirror remote to local
+	verboseprintf("SFTP connection established; %s\n", &creds)
 
 	filesetLocal, err := fileset.New(local)
 	if err != nil {
@@ -160,8 +182,116 @@ func SftpMir(local, remote string, creds libsftp.Credentials, dry, ignorehidden 
 		return err
 	}
 
-	fmt.Println(filesetLocal.String())
-	fmt.Println(filesetRemote.String())
+	// verboseprintf("local %v\n", filesetLocal.String())
+	// verboseprintf("local %v\n", filesetRemote.String())
+
+	basepath := strings.TrimSuffix(filesetLocal.Basepath, string(os.PathSeparator))
+
+	// step 1: copy everything from source to dst if src newer
+	err = filepath.Walk(local,
+		func(srcPath string, srcInfo os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			childPath := strings.TrimPrefix(srcPath, filesetLocal.Basepath)
+			if childPath == basepath {
+				return nil // skip basepath
+			}
+
+			if ignorehidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
+				verboseprintf("skip hidden '%s'\n", srcPath)
+				return nil
+			}
+
+			nItems++
+			nBytes += uint(srcInfo.Size())
+
+			dstPath := filepath.Join(remote, childPath)
+
+			// A) item is directory.
+			//   exists in dst?
+			//     no  --> create.
+			//     yes --> skip.
+			if srcInfo.IsDir() {
+				verboseprintf("create or skip dir '%s'\n", dstPath)
+				return sc.MkdirAll(dstPath)
+			}
+
+			if !srcInfo.Mode().IsRegular() {
+				verboseprintf("skip non-regular file '%s'\n", srcPath)
+				return nil
+			}
+
+			// B) item is file.
+			//   exists in dst?
+			//     no  --> write.
+			//     yes --> overwrite?
+			//       yes --> write.
+			//       no  --> src younger?
+			//         yes --> write.
+			//         no  --> skip.
+			if !filesetRemote.Contains(childPath) {
+				fmt.Printf("copy file '%s'\n", srcPath)
+				if !dry {
+					_, err := libsftp.UploadFile(sc, srcPath, dstPath)
+					return err
+				}
+				return nil
+			}
+
+			dstInfo, _ := sc.Stat(filepath.Join(filesetRemote.Basepath, childPath))
+			if compare.BasicUnequal(srcInfo, dstInfo) {
+				fmt.Printf("overwrite file '%s'\n", srcPath)
+				if dry {
+					return nil
+				}
+				_, err := libsftp.UploadFile(sc, srcPath, dstPath)
+				return err
+			} else {
+				verboseprintf("skip file '%s'\n", srcPath)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	// step 2: clean everything from dst that is not in src
+	if clean {
+		// for file in filesetDst: file exists in filesetSrc ? --> Delete if not.
+		for name, dstInfo := range filesetRemote.Paths {
+			if skipHidden && (strings.HasPrefix(name, ".") || strings.Contains(name, "/.")) {
+				verboseprintf("skip hidden '%s'\n", name)
+				return nil
+			}
+			if !filesetLocal.Contains(name) {
+				fmt.Printf("file/dir '%v' does not exist in src, delete\n", name)
+				if dry {
+					return nil
+				}
+				if dstInfo.IsDir() {
+					err = sc.RemoveDirectory(filepath.Join(filesetRemote.Basepath, name))
+				} else {
+					// err = sc.Remove(filepath.Join(filesetRemote.Basepath, name))
+					err = libsftp.DeleteFile(sc, filepath.Join(filesetRemote.Basepath, name), true)
+				}
+				if err != nil {
+					// this can sometimes give an error if the parent directory was deleted before...
+					verboseprint("deletion failed,", err)
+				}
+			}
+		}
+	}
+
+	dt := time.Since(t0)
+	verboseprintf("~~~ SFTP MIRROR done ~~~\n%v items (%v) in %v\n~~~\n",
+		nItems,
+		copy.ByteCount(nBytes),
+		dt,
+	)
 
 	return nil
 }
