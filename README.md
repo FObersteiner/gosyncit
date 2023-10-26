@@ -1,10 +1,10 @@
 # gosyncit
 
-The aim of this project is to explore file handling in go, alongside a cobra/viper-based CLI. Only a very basic file system abstraction is used. Functionality for the local file system is extended by a platform-independent tool to mirror files via SFTP (e.g. no rsync available on the SFTP server). Anyways, let's go sync it.
+The aim of this project is to explore directory mirror / sync in go, alongside a cobra/viper-based CLI. Since v0.0.13 extended by a platform-independent tool to mirror / sync files via SFTP (e.g. no rsync available on the SFTP server).
 
 ## installation
 
-This assumes the [go toolchain](https://go.dev) to be installed:
+Assumes the [go toolchain](https://go.dev) to be installed:
 
 ```sh
 go install github.com/FObersteiner/gosyncit@latest
@@ -12,20 +12,22 @@ go install github.com/FObersteiner/gosyncit@latest
 
 ## usage
 
+### local storage
+
 #### mirror A &#8594; B
 
 Write files to destination if source is newer or file size doesn't match, only keep files that exist in source (see flags).
 
 ```
 Usage:
-  gosyncit mirror [flags]
+  gosyncit mirror 'src' 'dst' [flags]
 
 Aliases:
   mirror, mi
 
 Flags:
   -n, --dryrun       show what will be done
-  -x, --dirty        do not remove anything from dst that is not found in source
+  -x, --dirty        do not remove anything from destination that is not found in source
   -s, --skiphidden   skip hidden files
   -v, --verbose      verbose output to the command line
   -h, --help         help for mirror
@@ -40,7 +42,7 @@ Ensure source and destination have the same content, keep only the newest versio
 
 ```
 Usage:
-  gosyncit sync [flags]
+  gosyncit sync 'src' 'dst' [flags]
 
 Aliases:
   sync, sy
@@ -55,7 +57,9 @@ Global Flags:
       --config string   config file (default is $HOME/.gosyncit.toml)
 ```
 
----
+### local storage to SFTP and vice versa
+
+tbd
 
 ## Notes
 
@@ -63,12 +67,12 @@ Directory tree traversal is always recursive. There is no option to just copy/mi
 
 ### file comparison quirks
 
-- Test for equality is currently (v0.0.6) only done by comparing modification timestamp (mtime) and size (in bytes). Theoretically, if two files have the same name, mtime and size, they will be considered 'identical' although their _content_ could be different. To prevent this incorrect result, a byte-wise comparison ('deep-equal') would be needed if the basic comparison says 'equal'
-- timestamp comparison granularity is _microseconds_ at the moment (see `lib/compare/compare.go`, `BasicUnequal`). Nanosecond granularity was causing issues if a file was copied to a remote server.
-- `sync`, `mirror`: if two files with the same name and path also have the same mtime in source and destination, then the content of the source will take prevalence (i.e. will copied to destination)
+- Test for equality is only done by comparing modification timestamp (mtime) and size (n bytes). Theoretically, if two files have the same name, mtime and size, they will be considered 'identical' although their _content_ could be different. To prevent this incorrect result, a byte-wise comparison ('deep-equal') would be needed if the basic comparison says 'equal'
+- timestamp comparison granularity is _microseconds_ at the moment (see `lib/compare/compare.go`, `BasicUnequal`). Nanosecond granularity was causing issues if a file was copied to a remote server. Windows only supports precision down to a period of 100 ns.
+- `sync`, `mirror`: if two files with unequal size but the same name and path also have the same mtime in source and destination, then the content of the source will take prevalence (i.e. will copied to destination)
 
 ### not implemented
 
 - follow symlinks
-- inclusion / exclusion lists (regex)
-- see also the [issues on github](https://github.com/FObersteiner/gosyncit/issues)
+- inclusion / exclusion lists, regex patterns etc.
+- see also: [issues](https://github.com/FObersteiner/gosyncit/issues)
