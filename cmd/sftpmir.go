@@ -113,6 +113,7 @@ func init() {
 	}
 }
 
+
 // SftpMir mirrors directory 'local' to 'remote' (SFTP) or vice versa (see 'reverse' flag).
 func SftpMir(local, remote string, creds libsftp.Credentials, reverse, dry, ignorehidden, clean bool) error {
 	fmt.Println("~~~ SFTP MIRROR ~~~")
@@ -131,6 +132,7 @@ func SftpMir(local, remote string, creds libsftp.Credentials, reverse, dry, igno
 
 // wrapper for default mirror case; local to remote
 func sftpLocalToRemote(local, remote string, creds libsftp.Credentials, dry, ignorehidden, clean bool) error {
+
 	var nItems, nBytes uint
 	t0 := time.Now()
 
@@ -171,6 +173,7 @@ func sftpLocalToRemote(local, remote string, creds libsftp.Credentials, dry, ign
 		verboseprint("remote fileset population got error", err)
 		return err
 	}
+
 	basepath := strings.TrimSuffix(filesetLocal.Basepath, string(os.PathSeparator))
 
 	// step 1: copy everything from local to remote if src newer (or size different)
@@ -277,6 +280,7 @@ func sftpLocalToRemote(local, remote string, creds libsftp.Credentials, dry, ign
 		copy.ByteCount(nBytes),
 		dt,
 	)
+
 	return nil
 }
 
@@ -414,5 +418,6 @@ func sftpRemoteToLocal(local, remote string, creds libsftp.Credentials, dry, ign
 		copy.ByteCount(nBytes),
 		dt,
 	)
+
 	return nil
 }

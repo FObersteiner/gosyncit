@@ -133,7 +133,7 @@ func UploadFile(sc *sftp.Client, localFile, remoteFile string) (n int64, err err
 	if err != nil {
 		return 0, fmt.Errorf("unable to upload local file: %v", err)
 	}
-
+  
 	// srcInfo, err := os.Stat(localFile)
 	// if err != nil {
 	// 	return n, fmt.Errorf("unable to get local file stats: %v", err)
