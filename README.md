@@ -1,10 +1,10 @@
 # gosyncit
 
-The aim of this project is to explore file handling in go, alongside a cobra/viper-based CLI. This could also be extended by a platform-independent tool to sync files via SFTP (e.g. no rsync available on the SFTP server). Anyways, let's go sync it.
+The aim of this project is to explore directory mirror / sync in go, alongside a cobra/viper-based CLI. Since v0.0.13 extended by a platform-independent tool to mirror / sync files via SFTP (e.g. no rsync available on the SFTP server).
 
 ## installation
 
-This assumes the [go toolchain](https://go.dev) to be installed:
+Assumes the [go toolchain](https://go.dev) to be installed:
 
 ```sh
 go install github.com/FObersteiner/gosyncit@latest
@@ -12,20 +12,22 @@ go install github.com/FObersteiner/gosyncit@latest
 
 ## usage
 
+### local storage
+
 #### mirror A &#8594; B
 
 Write files to destination if source is newer or file size doesn't match, only keep files that exist in source (see flags).
 
 ```
 Usage:
-  gosyncit mirror [flags]
+  gosyncit mirror 'src' 'dst' [flags]
 
 Aliases:
   mirror, mi
 
 Flags:
   -n, --dryrun       show what will be done
-  -x, --dirty        do not remove anything from dst that is not found in source
+  -x, --dirty        do not remove anything from destination that is not found in source
   -s, --skiphidden   skip hidden files
   -v, --verbose      verbose output to the command line
   -h, --help         help for mirror
@@ -40,7 +42,7 @@ Ensure source and destination have the same content, keep only the newest versio
 
 ```
 Usage:
-  gosyncit sync [flags]
+  gosyncit sync 'src' 'dst' [flags]
 
 Aliases:
   sync, sy
@@ -55,7 +57,9 @@ Global Flags:
       --config string   config file (default is $HOME/.gosyncit.toml)
 ```
 
----
+### local storage to SFTP and vice versa
+
+tbd
 
 ## Notes
 
