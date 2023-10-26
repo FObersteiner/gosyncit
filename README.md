@@ -59,7 +59,27 @@ Global Flags:
 
 ### local storage to SFTP and vice versa
 
-tbd
+The direction can either be "local --> remote" or "remote --> local". "local" in this context means local file system, remote means file system of the SFTP server.
+
+```
+Usage:
+  gosyncit sftpmirror 'local-path' 'remote-path' 'remote-url' 'username' [flags]
+
+Aliases:
+  sftpmirror, smir
+
+Flags:
+  -p, --port int     ssh port number (default 22)
+  -r, --reverse      reverse mirror: remote to local instead of local to remote
+  -n, --dryrun       show what will be done
+  -s, --skiphidden   skip hidden files
+  -x, --dirty        do not remove anything from dst that is not found in source
+  -v, --verbose      verbose output to the command line
+  -h, --help         help for sftpmirror
+
+Global Flags:
+      --config string   config file (default is $HOME/.gosyncit.toml)
+```
 
 ## Notes
 
