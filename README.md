@@ -67,12 +67,12 @@ Directory tree traversal is always recursive. There is no option to just copy/mi
 
 ### file comparison quirks
 
-- Test for equality is currently (v0.0.6) only done by comparing modification timestamp (mtime) and size (in bytes). Theoretically, if two files have the same name, mtime and size, they will be considered 'identical' although their _content_ could be different. To prevent this incorrect result, a byte-wise comparison ('deep-equal') would be needed if the basic comparison says 'equal'
-- timestamp comparison granularity is _microseconds_ at the moment (see `lib/compare/compare.go`, `BasicUnequal`). Nanosecond granularity was causing issues if a file was copied to a remote server.
-- `sync`, `mirror`: if two files with the same name and path also have the same mtime in source and destination, then the content of the source will take prevalence (i.e. will copied to destination)
+- Test for equality is only done by comparing modification timestamp (mtime) and size (n bytes). Theoretically, if two files have the same name, mtime and size, they will be considered 'identical' although their _content_ could be different. To prevent this incorrect result, a byte-wise comparison ('deep-equal') would be needed if the basic comparison says 'equal'
+- timestamp comparison granularity is _microseconds_ at the moment (see `lib/compare/compare.go`, `BasicUnequal`). Nanosecond granularity was causing issues if a file was copied to a remote server. Windows only supports precision down to a period of 100 ns.
+- `sync`, `mirror`: if two files with unequal size but the same name and path also have the same mtime in source and destination, then the content of the source will take prevalence (i.e. will copied to destination)
 
 ### not implemented
 
 - follow symlinks
-- inclusion / exclusion lists (regex)
-- see also the [issues on github](https://github.com/FObersteiner/gosyncit/issues)
+- inclusion / exclusion lists, regex patterns etc.
+- see also: [issues](https://github.com/FObersteiner/gosyncit/issues)
