@@ -134,7 +134,18 @@ func UploadFile(sc *sftp.Client, localFile, remoteFile string) (n int64, err err
 		return 0, fmt.Errorf("unable to upload local file: %v", err)
 	}
 
-	return n, err
+	// srcInfo, err := os.Stat(localFile)
+	// if err != nil {
+	// 	return n, fmt.Errorf("unable to get local file stats: %v", err)
+	// }
+
+	// mtime := srcInfo.ModTime()
+	// err = sc.Chtimes(remoteFile, mtime, mtime)
+	// if err != nil {
+	// 	return n, fmt.Errorf("unable to set local file timestamp to remote file: %v", err)
+	// }
+
+	return n, nil
 }
 
 // DownloadFile from SFTP server
