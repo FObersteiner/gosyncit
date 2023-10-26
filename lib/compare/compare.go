@@ -8,8 +8,11 @@ import (
 )
 
 const (
-	BUFFERSIZE      = 4096
-	TimeGranularity = time.Microsecond
+	BUFFERSIZE = 4096
+)
+
+var (
+	TimeGranularity = time.Microsecond // caller might want to set this
 )
 
 // BasicUnequal returns true if source modification time is after that of dst modification time,
