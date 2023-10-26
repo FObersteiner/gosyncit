@@ -64,9 +64,10 @@ func (fs *Fileset) SftpPopulate(sc *sftp.Client) error {
 			return err
 		}
 		p := strings.TrimPrefix(walker.Path(), fs.Basepath)
-		if p != "" {
-			fs.Paths[p] = walker.Stat()
+		if p == "" {
+			continue
 		}
+		fs.Paths[p] = walker.Stat()
 	}
 	return nil
 }
