@@ -92,6 +92,8 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 	fmt.Println("~~~ MIRROR ~~~")
 	fmt.Printf("'%s' --> '%s'\n\n", src, dst)
 
+	//	fmt.Println("dry:", dry, "clean:", clean, "skipHidden:", skipHidden)
+
 	var nItems, nBytes uint
 	t0 := time.Now()
 
@@ -117,6 +119,7 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 
 	// we need a fileset for the destination, to check against while walking the src
 	// for file in filesetSrc: src file exists in dst ?
+	verboseprint("analyzing destination...")
 	err = filesetDst.Populate()
 	if err != nil {
 		verboseprint("dst fileset population got error", err)
@@ -212,7 +215,7 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 			}
 
 			if !filesetSrc.Contains(name) {
-				fmt.Printf("file '%v' does not exist in src, delete\n", name)
+				fmt.Printf("file / dir '%v' does not exist in src, delete\n", name)
 				err := copy.DeleteFileOrDir(filepath.Join(filesetDst.Basepath, name), dstInfo, dry)
 				if err != nil {
 					// this can sometimes give an error if the parent directory was deleted before...

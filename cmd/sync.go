@@ -109,6 +109,7 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 
 	// we need a fileset for the destination, to check against while walking the src
 	// for file in filesetSrc: src file exists in dst ?
+	verboseprint("analyzing destination...")
 	err = filesetDst.Populate()
 	if err != nil {
 		verboseprint("dst fileset population got error", err)
