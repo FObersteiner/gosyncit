@@ -1,6 +1,6 @@
 module github.com/FObersteiner/gosyncit
 
-go 1.21
+go 1.21.4
 
 require (
 	github.com/pkg/sftp v1.13.6
