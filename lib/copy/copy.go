@@ -1,6 +1,7 @@
 package copy
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -95,8 +96,16 @@ func DeleteFileOrDir(dst string, dstInfo fs.FileInfo, dry bool) error {
 	if dry {
 		return nil
 	}
+	// ignore errors here; might attempt to delete a file after the parent directory was removed
 	if dstInfo.IsDir() {
-		return os.RemoveAll(dst)
+		_ = os.RemoveAll(dst)
+	} else {
+		_ = os.Remove(dst)
 	}
-	return os.Remove(dst)
+
+	// file / path must not exist now; expect error:
+	if _, err := os.Stat(dst); errors.Is(err, os.ErrNotExist) {
+		return nil // an error means the call was successful
+	}
+	return fmt.Errorf("failed to remove '%v'", dst)
 }
