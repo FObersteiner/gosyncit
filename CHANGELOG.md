@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-12-19 (v0.0.16)
+
+- igonre "Thumbs.db"
+
 ## 2023-10-26 (v0.0.14)
 
 - mirror from SFPT to local
