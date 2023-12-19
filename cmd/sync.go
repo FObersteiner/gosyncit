@@ -145,6 +145,11 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 				return nil
 			}
 
+			if strings.HasSuffix(srcPath, "humbs.db") {
+				verboseprint("skip Windows Thumbs.db")
+				return nil
+			}
+
 			nItems++
 			nBytes += uint(srcInfo.Size())
 
@@ -211,6 +216,11 @@ func Sync(src, dst string, dry bool, skipHidden bool) error {
 
 			if skipHidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
 				verboseprintf("skip hidden '%s'\n", srcPath)
+				return nil
+			}
+
+			if strings.HasSuffix(srcPath, "humbs.db") {
+				verboseprint("skip Windows Thumbs.db")
 				return nil
 			}
 

@@ -113,7 +113,6 @@ func init() {
 	}
 }
 
-
 // SftpMir mirrors directory 'local' to 'remote' (SFTP) or vice versa (see 'reverse' flag).
 func SftpMir(local, remote string, creds libsftp.Credentials, reverse, dry, ignorehidden, clean bool) error {
 	fmt.Println("~~~ SFTP MIRROR ~~~")
@@ -132,7 +131,6 @@ func SftpMir(local, remote string, creds libsftp.Credentials, reverse, dry, igno
 
 // wrapper for default mirror case; local to remote
 func sftpLocalToRemote(local, remote string, creds libsftp.Credentials, dry, ignorehidden, clean bool) error {
-
 	var nItems, nBytes uint
 	t0 := time.Now()
 
@@ -190,6 +188,11 @@ func sftpLocalToRemote(local, remote string, creds libsftp.Credentials, dry, ign
 
 			if ignorehidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
 				verboseprintf("skip hidden '%s'\n", srcPath)
+				return nil
+			}
+
+			if strings.HasSuffix(srcPath, "humbs.db") {
+				verboseprint("skip Windows Thumbs.db")
 				return nil
 			}
 
@@ -286,6 +289,7 @@ func sftpLocalToRemote(local, remote string, creds libsftp.Credentials, dry, ign
 
 // wrapper if reverse == True; mirror from remote to local
 func sftpRemoteToLocal(local, remote string, creds libsftp.Credentials, dry, ignorehidden, clean bool) error {
+	_ = clean // NOTE : unused ?!
 	var nItems, nBytes uint
 	t0 := time.Now()
 
@@ -350,6 +354,11 @@ func sftpRemoteToLocal(local, remote string, creds libsftp.Credentials, dry, ign
 
 		if ignorehidden && (strings.HasPrefix(srcPath, ".") || strings.Contains(srcPath, "/.")) {
 			verboseprintf("skip hidden '%s'\n", srcPath)
+			return nil
+		}
+
+		if strings.HasSuffix(srcPath, "humbs.db") {
+			verboseprint("skip Windows Thumbs.db")
 			return nil
 		}
 

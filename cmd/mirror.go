@@ -151,6 +151,11 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 				return nil
 			}
 
+			if strings.HasSuffix(srcPath, "humbs.db") {
+				verboseprint("skip Windows Thumbs.db")
+				return nil
+			}
+
 			nItems++
 			nBytes += uint(srcInfo.Size())
 
@@ -211,6 +216,11 @@ func Mirror(src, dst string, dry, clean, skipHidden bool) error {
 
 			if skipHidden && (strings.HasPrefix(name, ".") || strings.Contains(name, "/.")) {
 				verboseprintf("skip hidden '%s'\n", name)
+				return nil
+			}
+
+			if strings.HasSuffix(name, "humbs.db") {
+				verboseprint("skip Windows Thumbs.db")
 				return nil
 			}
 
