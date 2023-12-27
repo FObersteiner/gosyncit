@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2023-12-27
+## 2023-12-27 (v0.0.17)
 
 - readme and workflow tweaks, run actions on tag only
 
