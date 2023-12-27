@@ -1,3 +1,6 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![CI Status](https://github.com/FObersteiner/gosyncit/tree/master/.github/workflows/go.yml/badge.svg)
+
 # gosyncit
 
 A project to explore directory mirror / sync in `go`, alongside a cobra/viper-based CLI. Since `v0.0.13`, this is extended by a platform-independent tool to mirror / sync files via SFTP. This can be useful for instance if there is no `rsync` available on the SFTP server.
@@ -17,69 +20,52 @@ go install github.com/FObersteiner/gosyncit@latest
 #### mirror A &#8594; B
 
 Write files to destination if source is newer or file size doesn't match, only keep files that exist in source (see flags).
+<!--[[[cog
+   import subprocess
+   import cog
+   text = subprocess.check_output("gosyncit mirror --help", shell=True)
+   cog.out("""```text
+   >>> gosyncit mirror --help
 
-```text
-Usage:
-  gosyncit mirror 'src' 'dst' [flags]
-
-Aliases:
-  mirror, mi
-
-Flags:
-  -n, --dryrun       show what will be done
-  -x, --dirty        do not remove anything from destination that is not found in source
-  -s, --skiphidden   skip hidden files
-  -v, --verbose      verbose output to the command line
-  -h, --help         help for mirror
-
-Global Flags:
-      --config string   config file (default is $HOME/.gosyncit.toml)
-```
+   """, dedent=True)
+   cog.out(text.decode('utf-8'))
+   cog.out("```")
+]]]-->
+<!--[[[end]]]-->
 
 #### sync A &#8596; B
 
 Ensure source and destination have the same content, keep only the newest version of any file.
 
-```text
-Usage:
-  gosyncit sync 'src' 'dst' [flags]
+<!--[[[cog
+   import subprocess
+   import cog
+   text = subprocess.check_output("gosyncit sync --help", shell=True)
+   cog.out("""```text
+   >>> gosyncit sync --help
 
-Aliases:
-  sync, sy
-
-Flags:
-  -n, --dryrun       show what will be done
-  -s, --skiphidden   skip hidden files
-  -v, --verbose      verbose output to the command line
-  -h, --help         help for sync
-
-Global Flags:
-      --config string   config file (default is $HOME/.gosyncit.toml)
-```
+   """, dedent=True)
+   cog.out(text.decode('utf-8'))
+   cog.out("```")
+]]]-->
+<!--[[[end]]]-->
 
 ### local storage to SFTP and vice versa
 
 The direction can either be "local --> remote" or "remote --> local". "local" in this context means local file system, remote means file system of the SFTP server.
 
-```text
-Usage:
-  gosyncit sftpmirror 'local-path' 'remote-path' 'remote-url' 'username' [flags]
+<!--[[[cog
+   import subprocess
+   import cog
+   text = subprocess.check_output("gosyncit sftpmirror --help", shell=True)
+   cog.out("""```text
+   >>> gosyncit sftpmirror --help
 
-Aliases:
-  sftpmirror, smir
-
-Flags:
-  -p, --port int     ssh port number (default 22)
-  -r, --reverse      reverse mirror: remote to local instead of local to remote
-  -n, --dryrun       show what will be done
-  -s, --skiphidden   skip hidden files
-  -x, --dirty        do not remove anything from dst that is not found in source
-  -v, --verbose      verbose output to the command line
-  -h, --help         help for sftpmirror
-
-Global Flags:
-      --config string   config file (default is $HOME/.gosyncit.toml)
-```
+   """, dedent=True)
+   cog.out(text.decode('utf-8'))
+   cog.out("```")
+]]]-->
+<!--[[[end]]]-->
 
 ## Notes
 
