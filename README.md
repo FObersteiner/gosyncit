@@ -1,5 +1,5 @@
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/FObersteiner/gosyncit/blob/master/LICENSE)
-[![Build Status](https://github.com/FObersteiner/gosyncit/actions/workflows/go.yml/badge.svg)](https://github.com/FObersteiner/gosyncit/actions/workflows/go.yml)
+[![Build Status](https://github.com/FObersteiner/gosyncit/actions/workflows/gosyncit-tests.yml/badge.svg)](https://github.com/FObersteiner/gosyncit/actions/workflows/gosyncit-tests.yml)
 
 # gosyncit
 

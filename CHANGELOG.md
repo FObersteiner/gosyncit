@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-12-27
+
+- readme and workflow tweaks, run actions on tag only
+
 ## 2023-12-19 (v0.0.16)
 
 - igonre "Thumbs.db"
