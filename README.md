@@ -31,6 +31,29 @@ Write files to destination if source is newer or file size doesn't match, only k
    cog.out(text.decode('utf-8'))
    cog.out("```")
 ]]]-->
+```text
+>>> gosyncit mirror --help
+
+Mirror the content of source directory to destination directory.
+Files will only be copied if the source file is newer.
+By default, anything that exists in the destination but not in the source will be deleted.
+
+Usage:
+  gosyncit mirror 'src' 'dst' [flags]
+
+Aliases:
+  mirror, mi
+
+Flags:
+  -n, --dryrun       show what will be done
+  -x, --dirty        do not remove anything from dst that is not found in source
+  -s, --skiphidden   skip hidden files
+  -v, --verbose      verbose output to the command line
+  -h, --help         help for mirror
+
+Global Flags:
+      --config string   config file (default is $HOME/.gosyncit.toml)
+```
 <!--[[[end]]]-->
 
 #### sync A &#8596; B
@@ -48,6 +71,27 @@ Ensure source and destination have the same content, keep only the newest versio
    cog.out(text.decode('utf-8'))
    cog.out("```")
 ]]]-->
+```text
+>>> gosyncit sync --help
+
+Synchronize the content of source directory with destination directory.
+Files will be copied if one is newer or doesn't exit in the destination.
+
+Usage:
+  gosyncit sync 'src' 'dst' [flags]
+
+Aliases:
+  sync, sy
+
+Flags:
+  -n, --dryrun       show what will be done
+  -s, --skiphidden   skip hidden files
+  -v, --verbose      verbose output to the command line
+  -h, --help         help for sync
+
+Global Flags:
+      --config string   config file (default is $HOME/.gosyncit.toml)
+```
 <!--[[[end]]]-->
 
 ### local storage to SFTP and vice versa
@@ -65,6 +109,30 @@ The direction can either be "local --> remote" or "remote --> local". "local" in
    cog.out(text.decode('utf-8'))
    cog.out("```")
 ]]]-->
+```text
+>>> gosyncit sftpmirror --help
+
+the direction can either be "local --> remote" or "remote --> local".
+  "local" in this context means local file system, remote means file system of the sftp server.
+
+Usage:
+  gosyncit sftpmirror 'local-path' 'remote-path' 'remote-url' 'username' [flags]
+
+Aliases:
+  sftpmirror, smir
+
+Flags:
+  -p, --port int     ssh port number (default 22)
+  -r, --reverse      reverse mirror: remote to local instead of local to remote
+  -n, --dryrun       show what will be done
+  -s, --skiphidden   skip hidden files
+  -x, --dirty        do not remove anything from dst that is not found in source
+  -v, --verbose      verbose output to the command line
+  -h, --help         help for sftpmirror
+
+Global Flags:
+      --config string   config file (default is $HOME/.gosyncit.toml)
+```
 <!--[[[end]]]-->
 
 ## Notes
